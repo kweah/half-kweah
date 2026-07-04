@@ -174,11 +174,13 @@
   @media(prefers-reduced-motion:reduce){.bunny-float{animation:none}}
   .drag-hint{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:#4E4A5A;margin-top:2px}
   @media(max-width:640px){
-    .hero{padding:40px 18px 44px}
-    .hero-inner{flex-direction:column-reverse}
+    .hero{padding:28px 18px 38px}
+    .hero-inner{flex-direction:column-reverse;gap:14px}
     .hero-menu{width:100%}
-    .menu-item{padding:11px 8px 11px 2px}
-    .bunny-stage{height:340px}
+    .hero-badge{margin-bottom:10px}
+    .menu-item{padding:8px 8px 8px 2px}
+    .menu-item .en{font-size:20px}
+    .bunny-stage{height:300px}
     .hero-word{font-size:26vw}
   }
   /* ---------- 家庭相册 ---------- */
@@ -551,7 +553,17 @@ function heroFocus(i){
     'radial-gradient(ellipse 46% 42% at 72% 45%, ' + m.css[0] + '2E, transparent 70%),' +
     'radial-gradient(ellipse 42% 40% at 82% 68%, ' + m.css[1] + '24, transparent 70%)';
 }
+const IS_TOUCH = window.matchMedia && window.matchMedia('(hover: none)').matches;
+let armedIdx = -1;
 function heroGo(i){
+  if(IS_TOUCH && armedIdx !== i){
+    armedIdx = i;
+    heroFocus(i);
+    const bs = document.getElementById('bunnyStage');
+    if(bs && bs.scrollIntoView) bs.scrollIntoView({behavior:'smooth', block:'nearest'});
+    toast('再点一次进入「' + HERO_MENU[i].zh + '」');
+    return;
+  }
   heroFocus(i);
   const el = document.getElementById(HERO_MENU[i].target);
   if(el && el.scrollIntoView) el.scrollIntoView({behavior:'smooth', block:'start'});
