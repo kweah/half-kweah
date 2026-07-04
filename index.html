@@ -319,8 +319,8 @@ let state = {
   expenses: [], incomes: [], budget: {month:{}, year:{}}
 };
 /* ====== Supabase 配置:只需要填这两行 ====== */
-const SUPA_URL = '填你的ProjectURL';   // 形如 https://xxxx.supabase.co
-const SUPA_KEY = '填你的anon公钥';      // Settings -> API -> anon public
+const SUPA_URL = 'https://mtckbvzuytaplelvkzcp.supabase.co';   // 形如 https://xxxx.supabase.co
+const SUPA_KEY = 'sb_publishable_3iV-BlCEFV-9URlNkWAVuQ_yYd5ipHb';      // Settings -> API -> anon public
 
 const DEVICE_ID = (()=>{ let d=localStorage.getItem('fh:device'); if(!d){ d=Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem('fh:device',d);} return d; })();
 let supa = null, synced = false;
