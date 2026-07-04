@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>家 · 家庭面板</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700&family=Noto+Sans+SC:wght@400;500;700&family=Baloo+2:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F8F4EC;
+    --card:#FFFDF8;
+    --ink:#5B564C;
+    --ink-soft:#A09889;
+    --line:#EFE8DB;
+    --matcha:#9DB89A;
+    --matcha-deep:#7C9B78;
+    --sakura:#E8B7BC;
+    --sora:#A9C3D4;
+    --anzu:#E6C079;
+    --anzu-deep:#D0A34F;
+    --danger:#D08770;
+    --radius:18px;
+    --shadow:0 2px 14px rgba(130,118,95,.09);
+    --round:"Zen Maru Gothic","Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--round);min-height:100vh;padding-bottom:48px}
+
+  /* ---------- 顶栏 ---------- */
+  header{max-width:1080px;margin:0 auto;padding:30px 20px 8px;display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:12px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .seal{width:56px;height:56px;border-radius:20px;background:var(--matcha);color:#FFFDF8;font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:var(--shadow)}
+  .datebox .greet{font-size:13px;color:var(--ink-soft);letter-spacing:.06em}
+  .datebox .today{font-size:24px;font-weight:700;line-height:1.3;letter-spacing:.02em}
+  .members{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .member-chip{display:flex;align-items:center;gap:6px;background:var(--card);border:1.5px solid var(--line);border-radius:999px;padding:6px 12px 6px 9px;font-size:13px;box-shadow:var(--shadow)}
+  .dot{width:10px;height:10px;border-radius:50%;flex:none}
+  .member-chip button{border:none;background:none;color:var(--ink-soft);cursor:pointer;font-size:13px;line-height:1;padding:0 0 0 2px;font-family:var(--round)}
+  .member-chip button.confirming{color:var(--danger);font-weight:700}
+  .add-member{border:1.5px dashed var(--ink-soft);background:none;border-radius:999px;padding:6px 13px;font-size:13px;color:var(--ink-soft);cursor:pointer;font-family:var(--round)}
+  .add-member:hover{color:var(--matcha-deep);border-color:var(--matcha-deep)}
+  .inline-add{display:none;align-items:center;gap:6px}
+  .inline-add.open{display:flex}
+  .inline-add input{width:110px}
+
+  /* ---------- 网格 ---------- */
+  main{max-width:1080px;margin:18px auto 0;padding:0 20px;display:grid;grid-template-columns:1.15fr .85fr;gap:20px}
+  @media(max-width:760px){main{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:20px;min-width:0}
+
+  .card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px 20px 16px}
+  .card h2{font-size:16.5px;font-weight:700;display:flex;align-items:center;gap:9px;margin-bottom:13px;letter-spacing:.03em}
+  .card h2 .count{font-weight:500;font-size:12px;color:var(--ink-soft)}
+  .card h2::before{content:"";width:10px;height:10px;border-radius:50%;background:var(--matcha)}
+  .card.c-anzu h2::before{background:var(--anzu)}
+  .card.c-sakura h2::before{background:var(--sakura)}
+  .card.c-sora h2::before{background:var(--sora)}
+
+  /* ---------- 输入 ---------- */
+  .row{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}
+  input[type=text],input[type=date],input[type=time],select{
+    font-family:var(--round);font-size:14px;color:var(--ink);
+    border:1.5px solid var(--line);border-radius:12px;padding:8px 11px;background:#FFFEFB;min-width:0
+  }
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--matcha);box-shadow:0 0 0 3px rgba(157,184,154,.22)}
+  input.err{border-color:var(--danger);box-shadow:0 0 0 3px rgba(208,135,112,.2)}
+  .grow{flex:1 1 140px}
+  .btn{border:none;border-radius:999px;background:var(--matcha);color:#fff;font-size:14px;padding:8px 18px;cursor:pointer;font-family:var(--round);flex:none;font-weight:500;letter-spacing:.05em}
+  .btn:hover{background:var(--matcha-deep)}
+  .btn:focus-visible{outline:2px solid var(--anzu);outline-offset:2px}
+  .btn.small{padding:6px 14px;font-size:13px}
+
+  /* ---------- 列表 ---------- */
+  ul{list-style:none}
+  li.item{display:flex;align-items:flex-start;gap:10px;padding:10px 4px;border-bottom:1.5px dashed var(--line)}
+  li.item:last-child{border-bottom:none}
+  li.item .main{flex:1;min-width:0}
+  li.item .title{font-size:14.5px;word-break:break-word}
+  li.item .meta{font-size:12px;color:var(--ink-soft);margin-top:3px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+  li.item.done .title{text-decoration:line-through;color:var(--ink-soft)}
+  .del{border:none;background:none;color:#CFC8BB;cursor:pointer;font-size:15px;line-height:1;padding:2px;font-family:var(--round)}
+  .del:hover{color:var(--danger)}
+  input[type=checkbox]{width:19px;height:19px;accent-color:var(--matcha-deep);margin-top:2px;cursor:pointer;flex:none;border-radius:50%}
+  .empty{color:var(--ink-soft);font-size:13.5px;padding:10px 4px;line-height:1.7}
+
+  /* 日程日期徽标 */
+  .datechip{flex:none;width:52px;text-align:center;background:var(--bg);border-radius:14px;padding:7px 2px}
+  .datechip .d{font-size:19px;font-weight:700;line-height:1.1}
+  .datechip .m{font-size:11px;color:var(--ink-soft)}
+  .datechip.today-chip{background:var(--anzu);color:#5C431A}
+  .datechip.today-chip .m{color:#8A6A33}
+  .past{opacity:.45}
+
+  /* 财务 */
+  .budget-box{background:var(--bg);border-radius:14px;padding:13px 15px;margin-bottom:12px}
+  .budget-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-soft);margin-bottom:9px;flex-wrap:wrap;gap:6px}
+  .linkbtn{border:none;background:none;color:var(--matcha-deep);cursor:pointer;font-size:13px;padding:0;font-family:var(--round);font-weight:500}
+  .linkbtn:hover{text-decoration:underline}
+  .tabs,.seg{display:flex;background:#ECE5D6;border-radius:999px;padding:3px;gap:2px;flex:none}
+  .tabs button,.seg button{border:none;background:none;font-family:var(--round);font-size:12.5px;color:var(--ink-soft);padding:4px 13px;border-radius:999px;cursor:pointer}
+  .tabs button.on{background:var(--card);color:var(--ink);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .seg button.on-exp{background:var(--card);color:var(--danger);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .seg button.on-inc{background:var(--card);color:var(--matcha-deep);font-weight:700;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .budget-bar{height:10px;background:#EBE4D6;border-radius:5px;overflow:hidden}
+  .budget-fill{height:100%;border-radius:5px;background:var(--matcha);width:0;transition:width .4s ease}
+  .budget-stat{font-size:13px;margin-top:9px;display:flex;justify-content:space-between;flex-wrap:wrap;gap:4px}
+  .amt{font-weight:700;font-size:15px;flex:none;white-space:nowrap}
+  .amt.inc{color:var(--matcha-deep)}
+  .bcat{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink-soft);margin:6px 0}
+  .bcat .cname{flex:none;width:58px;color:var(--ink)}
+  .bcat .bar{flex:1;height:7px;background:#F1EBDF;border-radius:4px;overflow:hidden}
+  .bcat .bar i{display:block;height:100%;border-radius:4px}
+  .bcat .cval{flex:none;min-width:104px;text-align:right}
+  .budget-grid{display:none;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+  .budget-grid.open{display:grid}
+  .budget-grid label{font-size:12px;color:var(--ink-soft);display:flex;flex-direction:column;gap:3px}
+  .budget-grid input{width:100%}
+  .budget-grid .saverow{grid-column:1/-1;display:flex;justify-content:flex-end}
+  .fin-summary{display:flex;justify-content:space-between;background:var(--bg);border-radius:14px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;text-align:center;gap:8px;color:var(--ink-soft)}
+  .fin-summary .kpi{flex:1;min-width:72px}
+  .fin-summary .kpi .v{font-weight:700;font-size:16px;margin-top:2px;color:var(--ink)}
+
+  /* 留言板 */
+  .note{background:#FFF6EC;border:1.5px solid #F3E3CC;border-radius:14px;padding:11px 13px;margin-bottom:10px;position:relative}
+  .note::before{content:"";position:absolute;top:-6px;left:16px;width:12px;height:12px;border-radius:50%;background:var(--sakura);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+  .note .txt{font-size:14px;white-space:pre-wrap;word-break:break-word;line-height:1.7}
+  .note .by{font-size:12px;color:var(--ink-soft);margin-top:7px;display:flex;justify-content:space-between;align-items:center}
+  textarea{width:100%;border:1.5px solid var(--line);border-radius:12px;padding:9px 11px;font-family:var(--round);font-size:14px;background:#FFFEFB;resize:vertical;min-height:56px;color:var(--ink)}
+
+  /* 轻提示 */
+  #toast{position:fixed;left:50%;bottom:32px;transform:translateX(-50%) translateY(20px);background:#6B655A;color:#FFFDF8;font-size:13.5px;padding:10px 20px;border-radius:999px;opacity:0;pointer-events:none;transition:all .3s ease;z-index:99;box-shadow:0 4px 16px rgba(0,0,0,.15)}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .savenote{max-width:1080px;margin:16px auto 0;padding:0 20px;font-size:12px;color:var(--ink-soft);text-align:center;letter-spacing:.04em}
+  @media(prefers-reduced-motion:no-preference){
+    .card{animation:rise .4s ease both}
+    @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  }
+
+  /* ---------- Neon Lucky Cat Hero ---------- */
+  .hero{position:relative;overflow:hidden;padding:64px 24px 60px;color:#EDEAF2;background:#08080E}
+  .hero::before{content:"";position:absolute;inset:0;pointer-events:none;
+    background:radial-gradient(ellipse 46% 42% at 70% 42%,rgba(255,79,216,.16),transparent 70%),
+               radial-gradient(ellipse 40% 38% at 78% 62%,rgba(34,230,255,.12),transparent 70%),
+               radial-gradient(ellipse 55% 45% at 20% 15%,rgba(120,60,255,.08),transparent 70%)}
+  .hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,79,216,.4),rgba(34,230,255,.4),transparent)}
+  .hero-inner{position:relative;z-index:1;max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:40px;flex-wrap:wrap}
+  .hero-text{flex:1 1 380px;min-width:280px}
+  .hero-badge{display:inline-block;font-size:11px;letter-spacing:.3em;text-transform:uppercase;
+    color:#FF4FD8;margin-bottom:22px;font-weight:600;text-shadow:0 0 18px rgba(255,79,216,.6)}
+  .hero-title{font-family:'Baloo 2',var(--round);font-size:clamp(34px,5vw,54px);line-height:1.12;font-weight:700;margin-bottom:18px;color:#fff;letter-spacing:-.01em}
+  .hero-title em{font-style:normal;background:linear-gradient(100deg,#FF4FD8,#22E6FF);
+    -webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero-sub{font-size:15px;color:#8E8A99;line-height:1.8;margin-bottom:32px;max-width:380px}
+  .hero-cta{border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:13px 30px;font-size:13.5px;font-weight:600;letter-spacing:.06em;font-family:var(--round);background:transparent;color:#fff;cursor:pointer;transition:all .25s ease}
+  .hero-cta:hover{background:#fff;color:#08080E;box-shadow:0 0 30px rgba(255,79,216,.35)}
+  .hero-cta:focus-visible{outline:2px solid #FF4FD8;outline-offset:3px}
+  .hero-visual{position:relative;flex:1 1 340px;min-width:300px;display:flex;flex-direction:column;align-items:center}
+  #cat3d{width:100%;max-width:420px;height:440px;cursor:grab;touch-action:none}
+  #cat3d.dragging{cursor:grabbing}
+  .drag-hint{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:#4E4A5A;margin-top:2px}
+  @media(max-width:640px){
+    .hero{padding:46px 18px 50px}
+    .hero-inner{flex-direction:column-reverse;text-align:center}
+    .hero-sub{margin-left:auto;margin-right:auto}
+    #cat3d{height:340px}
+  }
+</style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <span class="hero-badge">Half · Kweah</span>
+      <h1 class="hero-title">Luck lives<br><em>in this home.</em></h1>
+      <p class="hero-sub">Calendar, budget, lists and notes — one lucky little place for the three of us.</p>
+      <button class="hero-cta" onclick="document.getElementById('mainDash').scrollIntoView({behavior:'smooth'})">Open dashboard</button>
+    </div>
+    <div class="hero-visual">
+      <div id="cat3d" role="img" aria-label="Interactive 3D lucky cat — drag to rotate"></div>
+      <div class="drag-hint">Drag to spin</div>
+    </div>
+  </div>
+</section>
+
+<header id="mainDash">
+  <div class="brand">
+    <div class="seal">家</div>
+    <div class="datebox">
+      <div class="greet" id="greet">你好</div>
+      <div class="today" id="todayText"></div>
+    </div>
+  </div>
+  <div class="members" id="membersBar"></div>
+</header>
+
+<main>
+  <div class="col">
+    <!-- 家庭日程 -->
+    <section class="card">
+      <h2>家庭日程 <span class="count" id="evCount"></span></h2>
+      <div class="row">
+        <input type="text" id="evTitle" class="grow" placeholder="例如:牙医预约、家长会…" maxlength="60">
+        <input type="date" id="evDate">
+        <input type="time" id="evTime">
+        <select id="evMember"></select>
+        <button class="btn" onclick="addEvent()">添加</button>
+      </div>
+      <ul id="evList"></ul>
+    </section>
+
+    <!-- 家庭财务 -->
+    <section class="card c-anzu">
+      <h2>家庭财务</h2>
+
+      <div class="fin-summary">
+        <div class="kpi"><div>本月收入</div><div class="v" id="sumInc" style="color:var(--matcha-deep)">¥0</div></div>
+        <div class="kpi"><div>本月支出</div><div class="v" id="sumExp" style="color:var(--danger)">¥0</div></div>
+        <div class="kpi"><div>本月结余</div><div class="v" id="sumNet">¥0</div></div>
+      </div>
+
+      <div class="budget-box">
+        <div class="budget-top">
+          <span style="display:flex;align-items:center;gap:10px">预算规划
+            <span class="tabs">
+              <button id="tabYear" onclick="switchBudgetView('year')">年度</button>
+              <button id="tabMonth" onclick="switchBudgetView('month')">月度</button>
+            </span>
+          </span>
+          <button class="linkbtn" onclick="toggleBudgetEdit()">设置预算</button>
+        </div>
+        <div class="budget-grid" id="budgetGrid"></div>
+        <div class="budget-bar"><div class="budget-fill" id="budgetFill"></div></div>
+        <div class="budget-stat" id="budgetStat"></div>
+        <div id="budgetCats"></div>
+      </div>
+
+      <div class="row">
+        <span class="seg">
+          <button id="segExp" onclick="setRecType('exp')">支出</button>
+          <button id="segInc" onclick="setRecType('inc')">收入</button>
+        </span>
+        <input type="text" id="expAmount" inputmode="decimal" placeholder="金额" style="width:78px">
+        <select id="expCat"></select>
+        <input type="date" id="expDate" style="width:132px" title="日期,默认今天">
+        <input type="text" id="expNote" class="grow" placeholder="备注(可选)" maxlength="30">
+        <select id="expMember"></select>
+        <button class="btn" id="recBtn" onclick="addRecord()">记支出</button>
+      </div>
+      <ul id="expList"></ul>
+    </section>
+
+    <!-- 留言板 -->
+    <section class="card c-sakura">
+      <h2>家庭留言板</h2>
+      <div class="row" style="flex-direction:column;align-items:stretch">
+        <textarea id="noteText" placeholder="给家人留句话,比如:晚饭在锅里,记得热一下 ♡" maxlength="300"></textarea>
+        <div class="row" style="margin-bottom:0">
+          <select id="noteMember" class="grow"></select>
+          <button class="btn" onclick="addNote()">贴上留言</button>
+        </div>
+      </div>
+      <div id="noteList"></div>
+    </section>
+  </div>
+
+  <div class="col">
+    <!-- 待办事项 -->
+    <section class="card c-sora">
+      <h2>待办事项 <span class="count" id="todoCount"></span></h2>
+      <div class="row">
+        <input type="text" id="todoText" class="grow" placeholder="例如:倒垃圾、交水电费…" maxlength="60">
+        <select id="todoMember"></select>
+        <button class="btn" onclick="addTodo()">添加</button>
+      </div>
+      <ul id="todoList"></ul>
+    </section>
+
+    <!-- 购物清单 -->
+    <section class="card">
+      <h2>购物清单 <span class="count" id="shopCount"></span></h2>
+      <div class="row">
+        <input type="text" id="shopText" class="grow" placeholder="例如:鸡蛋、酱油、纸巾…" maxlength="40">
+        <button class="btn" onclick="addShop()">添加</button>
+      </div>
+      <ul id="shopList"></ul>
+    </section>
+  </div>
+</main>
+
+<p class="savenote" id="saveNote">数据会自动保存,下次打开还在 ⸝⸝ 今天也要好好生活呀</p>
+<div id="loginOverlay" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(20,18,24,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 26px;max-width:340px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+    <div style="font-family:var(--round);font-size:18px;font-weight:700;margin-bottom:6px">🏠 家庭云同步</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;line-height:1.7">登录家庭共享账号,数据就会在你和惠婷的手机之间实时同步。每台设备只需登录一次。</div>
+    <input id="lgEmail" type="email" placeholder="邮箱" autocomplete="username" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--bg);color:var(--ink)">
+    <input id="lgPass" type="password" placeholder="密码" autocomplete="current-password" style="width:100%;box-sizing:border-box;margin-bottom:16px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--bg);color:var(--ink)">
+    <button id="lgBtn" onclick="doLogin()" style="width:100%;padding:12px;border:none;border-radius:12px;background:var(--matcha-deep);color:#fff;font-size:14.5px;font-weight:700;font-family:var(--round);cursor:pointer">登录</button>
+    <div style="font-size:11px;color:var(--ink-soft);margin-top:12px;text-align:center">暂不登录也能用,数据保存在本机 <a href="javascript:void(0)" onclick="hideLogin()" style="color:var(--matcha-deep)">先跳过</a></div>
+  </div>
+</div>
+<div id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  onerror="var s=document.createElement('script');s.src='https://unpkg.com/@supabase/supabase-js@2';document.head.appendChild(s);"></script>
+<script>
+/* ================= 数据与存储 ================= */
+const KEY = 'family-hub:data';
+const PALETTE = ['#E8B7BC','#9DB89A','#A9C3D4','#E6C079','#B8A6C9','#8FBFB2'];
+let state = {
+  members: [
+    {id:'m1',name:'惠婷',color:PALETTE[0]},
+    {id:'m2',name:'帅哥',color:PALETTE[2]}
+  ],
+  events: [], todos: [], shopping: [], notes: [],
+  expenses: [], incomes: [], budget: {month:{}, year:{}}
+};
+/* ====== Supabase 配置:只需要填这两行 ====== */
+const SUPA_URL = '填你的ProjectURL';   // 形如 https://xxxx.supabase.co
+const SUPA_KEY = '填你的anon公钥';      // Settings -> API -> anon public
+
+const DEVICE_ID = (()=>{ let d=localStorage.getItem('fh:device'); if(!d){ d=Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem('fh:device',d);} return d; })();
+let supa = null, synced = false;
+
+function note(msg){ const n=document.getElementById('saveNote'); if(n) n.textContent = msg; }
+
+function normalizeState(){
+  state.expenses = state.expenses || [];
+  state.incomes  = state.incomes  || [];
+  if(!state.budget || !state.budget.month){
+    const old = (state.budget && typeof state.budget.monthly==='number') ? state.budget.monthly : 0;
+    state.budget = { month: old>0 ? {'其他': old} : {}, year: {} };
+  }
+  state.expenses.forEach(e=>{
+    if(e.cat==='日用') e.cat='日用百货';
+    if(e.cat==='房租水电') e.cat='房贷';
+  });
+  migrateMembers();
+}
+
+function loadLocal(){
+  try{ const r = localStorage.getItem(KEY); if(r) state = JSON.parse(r); }catch(e){}
+}
+
+async function load(){
+  loadLocal();                       // 先用本机缓存快速渲染
+  normalizeState();
+  renderAll();
+
+  if(!window.supabase || SUPA_URL.indexOf('填') === 0){
+    note('本机模式:数据只保存在这台设备上(未配置云同步)');
+    return;
+  }
+  supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
+  const { data:{ session } } = await supa.auth.getSession();
+  if(session){ await afterAuth(); }
+  else{ showLogin(); note('登录后开启云同步'); }
+}
+
+async function afterAuth(){
+  hideLogin();
+  note('正在同步…');
+  try{
+    const { data, error } = await supa.from('family_state').select('data').eq('id','main').maybeSingle();
+    if(error) throw error;
+    if(data && data.data){
+      state = data.data;
+      normalizeState();
+      renderAll();
+    }else{
+      await pushRemote();            // 云端还没有数据,把本机数据传上去
+    }
+    subscribeRealtime();
+    synced = true;
+    note('云同步已开启 ⸝⸝ 两台手机都能实时看到彼此的修改');
+  }catch(e){
+    console.error(e);
+    note('云同步失败,已切换为本机保存:' + (e.message||e));
+  }
+}
+
+function subscribeRealtime(){
+  supa.channel('family-sync')
+    .on('postgres_changes',
+      { event:'*', schema:'public', table:'family_state', filter:'id=eq.main' },
+      payload => {
+        const row = payload.new;
+        if(row && row.device !== DEVICE_ID && row.data){
+          state = row.data;
+          normalizeState();
+          renderAll();
+          toast('已同步另一台设备的更新');
+        }
+      })
+    .subscribe();
+}
+
+async function pushRemote(){
+  if(!supa) return;
+  const { error } = await supa.from('family_state').upsert({
+    id:'main', data: state, device: DEVICE_ID, updated_at: new Date().toISOString()
+  });
+  if(error){ console.error('云端保存失败', error); note('云端保存失败,数据暂存本机'); }
+}
+
+let saveTimer=null;
+function save(){
+  try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){}
+  clearTimeout(saveTimer);
+  saveTimer=setTimeout(()=>{ if(synced) pushRemote(); }, 400);
+}
+
+/* ====== 登录浮层 ====== */
+function showLogin(){ document.getElementById('loginOverlay').style.display='flex'; }
+function hideLogin(){ document.getElementById('loginOverlay').style.display='none'; }
+async function doLogin(){
+  const email = document.getElementById('lgEmail').value.trim();
+  const pass  = document.getElementById('lgPass').value;
+  const btn   = document.getElementById('lgBtn');
+  if(!email || !pass){ toast('请输入邮箱和密码'); return; }
+  btn.disabled = true; btn.textContent = '登录中…';
+  const { error } = await supa.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = '登录';
+  if(error){ toast('登录失败:' + error.message); return; }
+  await afterAuth();
+}
+
+const uid = ()=> Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc = s => s.replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* 轻提示(替代 alert) */
+let toastTimer=null;
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+function flashErr(el){
+  el.classList.add('err'); el.focus();
+  setTimeout(()=>el.classList.remove('err'),1500);
+}
+
+/* ================= 顶栏:日期 & 成员 ================= */
+function renderHeader(){
+  const now = new Date();
+  const weeks=['日','一','二','三','四','五','六'];
+  document.getElementById('todayText').textContent =
+    now.getFullYear()+'年'+(now.getMonth()+1)+'月'+now.getDate()+'日 · 星期'+weeks[now.getDay()];
+  const h = now.getHours();
+  const greet = h<5?'夜深了,早点休息哦':h<11?'早上好,今天也要元气满满':h<13?'中午好,记得好好吃饭':h<18?'下午好,喝杯茶歇一歇':'晚上好,辛苦一天啦';
+  document.getElementById('greet').textContent = greet;
+
+  const bar = document.getElementById('membersBar');
+  bar.innerHTML = '';
+  state.members.forEach(m=>{
+    const chip = document.createElement('span');
+    chip.className='member-chip';
+    chip.innerHTML = '<span class="dot" style="background:'+m.color+'"></span>'+esc(m.name)+
+      '<button title="移除成员" aria-label="移除'+esc(m.name)+'" onclick="removeMember(this,\''+m.id+'\')">×</button>';
+    bar.appendChild(chip);
+  });
+  // 内嵌式添加成员
+  const wrap = document.createElement('span');
+  wrap.innerHTML = '<button class="add-member" onclick="this.style.display=\'none\';this.nextElementSibling.classList.add(\'open\');this.nextElementSibling.querySelector(\'input\').focus()">+ 添加成员</button>'+
+    '<span class="inline-add"><input type="text" maxlength="10" placeholder="名字"><button class="btn small" onclick="confirmAddMember(this)">好</button></span>';
+  bar.appendChild(wrap);
+  wrap.querySelector('.inline-add input').addEventListener('keydown',e=>{
+    if(e.key==='Enter') confirmAddMember(wrap.querySelector('.inline-add .btn'));
+  });
+
+  ['evMember','todoMember','noteMember','expMember'].forEach(id=>{
+    const sel = document.getElementById(id);
+    const prev = sel.value;
+    sel.innerHTML = state.members.map(m=>'<option value="'+m.id+'">'+esc(m.name)+'</option>').join('');
+    if([...sel.options].some(o=>o.value===prev)) sel.value=prev;
+  });
+}
+function confirmAddMember(btn){
+  const input = btn.parentElement.querySelector('input');
+  const name = input.value.trim();
+  if(!name){ flashErr(input); return; }
+  state.members.push({id:uid(),name:name.slice(0,10),color:PALETTE[state.members.length%PALETTE.length]});
+  save(); renderAll();
+  toast('已添加成员「'+name+'」');
+}
+/* 两步确认移除(替代 confirm 弹窗) */
+function removeMember(btn,id){
+  if(state.members.length<=1){ toast('至少保留一位成员哦'); return; }
+  if(!btn.classList.contains('confirming')){
+    btn.classList.add('confirming'); btn.textContent='确认移除?';
+    setTimeout(()=>{ btn.classList.remove('confirming'); btn.textContent='×'; },3000);
+    return;
+  }
+  state.members = state.members.filter(x=>x.id!==id);
+  save(); renderAll();
+  toast('已移除成员');
+}
+const memberOf = id => state.members.find(m=>m.id===id);
+const memberTag = id => {
+  const m = memberOf(id);
+  return m ? '<span class="dot" style="background:'+m.color+'"></span>'+esc(m.name) : '';
+};
+
+/* ================= 家庭日程 ================= */
+function addEvent(){
+  const t = document.getElementById('evTitle');
+  const d = document.getElementById('evDate');
+  if(!t.value.trim()){ flashErr(t); return; }
+  if(!d.value){ toast('请选择日期'); flashErr(d); return; }
+  state.events.push({
+    id:uid(), title:t.value.trim(), date:d.value,
+    time:document.getElementById('evTime').value,
+    memberId:document.getElementById('evMember').value
+  });
+  t.value=''; document.getElementById('evTime').value='';
+  save(); renderEvents();
+}
+function delEvent(id){ state.events=state.events.filter(e=>e.id!==id); save(); renderEvents(); }
+function renderEvents(){
+  const list = document.getElementById('evList');
+  const todayStr = new Date().toLocaleDateString('sv');
+  const evs = [...state.events].sort((a,b)=> (a.date+a.time).localeCompare(b.date+b.time));
+  document.getElementById('evCount').textContent = evs.length? '共 '+evs.length+' 项':'';
+  if(!evs.length){ list.innerHTML='<li class="empty">还没有日程。添加第一条,比如周末的家庭活动 ⸜(๑˃ᴗ˂)⸝</li>'; return; }
+  list.innerHTML = evs.map(e=>{
+    const p = e.date.split('-'); const mo=p[1], da=p[2];
+    const isToday = e.date===todayStr;
+    const isPast = e.date<todayStr;
+    return '<li class="item '+(isPast?'past':'')+'">'+
+      '<div class="datechip '+(isToday?'today-chip':'')+'">'+
+        '<div class="d">'+(+da)+'</div><div class="m">'+(isToday?'今天':(+mo)+'月')+'</div>'+
+      '</div>'+
+      '<div class="main">'+
+        '<div class="title">'+esc(e.title)+'</div>'+
+        '<div class="meta">'+(e.time?e.time+' · ':'')+memberTag(e.memberId)+'</div>'+
+      '</div>'+
+      '<button class="del" aria-label="删除日程" onclick="delEvent(\''+e.id+'\')">✕</button>'+
+    '</li>';
+  }).join('');
+}
+
+/* ================= 家庭财务 ================= */
+const CUR = '¥';
+const fmt = n => CUR + Number(n).toLocaleString('zh-CN',{maximumFractionDigits:2});
+const CATS_EXP = ['餐饮','交通','人情','房贷','娱乐','教育','医疗','日用百货','其他'];
+const CATS_INC = ['工资','投资','兼职','红包','其他'];
+const monthKey = () => new Date().toLocaleDateString('sv').slice(0,7);
+const yearKey  = () => new Date().toLocaleDateString('sv').slice(0,4);
+let budgetView = 'month';
+let recType = 'exp';
+
+/* 支出/收入切换 */
+function setRecType(t){
+  recType = t;
+  document.getElementById('segExp').className = t==='exp' ? 'on-exp' : '';
+  document.getElementById('segInc').className = t==='inc' ? 'on-inc' : '';
+  const cats = t==='exp' ? CATS_EXP : CATS_INC;
+  document.getElementById('expCat').innerHTML = cats.map(c=>'<option>'+c+'</option>').join('');
+  document.getElementById('recBtn').textContent = t==='exp' ? '记支出' : '记收入';
+}
+/* 年度/月度切换 */
+function switchBudgetView(v){
+  budgetView = v;
+  document.getElementById('tabYear').className  = v==='year' ? 'on' : '';
+  document.getElementById('tabMonth').className = v==='month' ? 'on' : '';
+  document.getElementById('budgetGrid').classList.remove('open');
+  renderFinance();
+}
+/* 内嵌分项目预算编辑 */
+function toggleBudgetEdit(){
+  const grid = document.getElementById('budgetGrid');
+  if(grid.classList.contains('open')){ grid.classList.remove('open'); return; }
+  const b = state.budget[budgetView] || {};
+  grid.innerHTML = CATS_EXP.map(c=>
+    '<label>'+c+'<input type="text" inputmode="decimal" data-cat="'+c+'" value="'+(b[c]||'')+'" placeholder="0"></label>'
+  ).join('') +
+  '<span class="saverow"><button class="btn small" onclick="saveBudget()">保存'+(budgetView==='year'?'年度':'月度')+'预算</button></span>';
+  grid.classList.add('open');
+}
+function saveBudget(){
+  const grid = document.getElementById('budgetGrid');
+  const b = {}; let bad = false;
+  grid.querySelectorAll('input[data-cat]').forEach(inp=>{
+    const v = inp.value.trim();
+    if(v==='') return;
+    const n = parseFloat(v);
+    if(isNaN(n)||n<0){ flashErr(inp); bad = true; return; }
+    if(n>0) b[inp.dataset.cat] = n;
+  });
+  if(bad){ toast('有的金额格式不对哦'); return; }
+  state.budget[budgetView] = b;
+  // 双向自动同步:月度 ↔ 年度
+  if(budgetView==='month'){
+    const y = {};
+    Object.entries(b).forEach(([c,v])=>{ y[c] = Math.round(v*12*100)/100; });
+    state.budget.year = y;
+  }else{
+    const m = {};
+    Object.entries(b).forEach(([c,v])=>{ m[c] = Math.round(v/12*100)/100; });
+    state.budget.month = m;
+  }
+  grid.classList.remove('open');
+  save(); renderFinance();
+  toast(budgetView==='year' ? '年度预算已保存,已自动分解到月度(÷12)' : '月度预算已保存,已自动归属年度(×12)');
+}
+/* 记一笔(支出或收入) */
+function addRecord(){
+  const a = document.getElementById('expAmount');
+  const amount = parseFloat(a.value);
+  if(!amount || amount<=0){ flashErr(a); toast('请输入正确的金额'); return; }
+  const d = document.getElementById('expDate');
+  const rec = {
+    id:uid(), amount:Math.round(amount*100)/100,
+    cat:document.getElementById('expCat').value,
+    note:document.getElementById('expNote').value.trim(),
+    memberId:document.getElementById('expMember').value,
+    date: d.value || new Date().toLocaleDateString('sv'),
+    ts:Date.now()
+  };
+  if(recType==='exp') state.expenses.push(rec); else state.incomes.push(rec);
+  a.value=''; document.getElementById('expNote').value='';
+  d.value = new Date().toLocaleDateString('sv');
+  save(); renderFinance();
+}
+function delExpense(id){ state.expenses=state.expenses.filter(e=>e.id!==id); save(); renderFinance(); }
+function delIncome(id){ state.incomes=state.incomes.filter(e=>e.id!==id); save(); renderFinance(); }
+
+function renderFinance(){
+  const mk = monthKey(), yk = yearKey();
+  const mExp = state.expenses.filter(e=>e.date.startsWith(mk));
+  const mInc = state.incomes.filter(e=>e.date.startsWith(mk));
+  const mExpSum = mExp.reduce((s,e)=>s+e.amount,0);
+  const mIncSum = mInc.reduce((s,e)=>s+e.amount,0);
+
+  /* 本月收支结余 */
+  document.getElementById('sumInc').textContent = fmt(mIncSum);
+  document.getElementById('sumExp').textContent = fmt(mExpSum);
+  const net = mIncSum - mExpSum;
+  const netEl = document.getElementById('sumNet');
+  netEl.textContent = (net<0?'-':'') + fmt(Math.abs(net));
+  netEl.style.color = net<0 ? 'var(--danger)' : 'var(--matcha-deep)';
+
+  /* 当前视图(年/月)的支出与预算 */
+  const scopeExp = budgetView==='month' ? mExp : state.expenses.filter(e=>e.date.startsWith(yk));
+  const spent = scopeExp.reduce((s,e)=>s+e.amount,0);
+  const b = state.budget[budgetView] || {};
+  const total = Object.values(b).reduce((s,v)=>s+v,0);
+  const label = budgetView==='month' ? '本月' : '今年';
+
+  const fill = document.getElementById('budgetFill');
+  const stat = document.getElementById('budgetStat');
+  if(total>0){
+    const pct = Math.min(spent/total*100,100);
+    fill.style.width = pct+'%';
+    fill.style.background = spent>total ? 'var(--danger)' : pct>80 ? 'var(--anzu-deep)' : 'var(--matcha)';
+    const left = total-spent;
+    stat.innerHTML = '<span>'+label+'已用 <b>'+fmt(spent)+'</b> / 预算 '+fmt(total)+'</span>'+
+      '<span style="color:'+(left<0?'var(--danger)':'var(--ink-soft)')+'">'+(left<0 ? '超支 '+fmt(-left) : '还剩 '+fmt(left))+'</span>';
+  }else{
+    fill.style.width = '0';
+    stat.innerHTML = '<span style="color:var(--ink-soft)">还没设置'+(budgetView==='month'?'月度':'年度')+'预算 — 点"设置预算",给每个项目定个数吧</span>';
+  }
+
+  /* 分项目:预算 vs 已用 */
+  const byCat = {};
+  scopeExp.forEach(e=> byCat[e.cat]=(byCat[e.cat]||0)+e.amount);
+  // 始终显示全部项目,历史遗留类别有支出时也补充显示
+  const rows = CATS_EXP.slice();
+  Object.keys(byCat).forEach(c=>{ if(!rows.includes(c)) rows.push(c); });
+  document.getElementById('budgetCats').innerHTML = rows.map(c=>{
+    const used = byCat[c]||0, quota = b[c]||0;
+    let w = 0, color = '#DDD3C0';
+    if(quota>0){
+      w = Math.min(used/quota*100,100);
+      color = used>quota ? 'var(--danger)' : w>80 ? 'var(--anzu-deep)' : 'var(--matcha)';
+    }else if(used>0){ w = 100; }
+    return '<div class="bcat"><span class="cname">'+esc(c)+'</span>'+
+      '<span class="bar"><i style="width:'+w.toFixed(1)+'%;background:'+color+'"></i></span>'+
+      '<span class="cval">'+fmt(used)+(quota>0 ? ' / '+fmt(quota) : ' · 未设预算')+'</span></div>';
+  }).join('');
+
+  /* 最近收支列表 */
+  const list = document.getElementById('expList');
+  const all = state.expenses.map(e=>({...e,_t:'exp'}))
+    .concat(state.incomes.map(e=>({...e,_t:'inc'})))
+    .sort((a,b)=>b.ts-a.ts).slice(0,14);
+  if(!all.length){
+    list.innerHTML = '<li class="empty">还没有记账。记下第一笔收入或支出吧 ﹙˘ ³˘﹚</li>'; return;
+  }
+  list.innerHTML = all.map(e=>{
+    const p = e.date.split('-');
+    return '<li class="item">'+
+      '<div class="main"><div class="title">'+esc(e.cat)+(e.note?' · '+esc(e.note):'')+'</div>'+
+      '<div class="meta">'+(+p[1])+'月'+(+p[2])+'日 · '+memberTag(e.memberId)+'</div></div>'+
+      '<span class="amt '+(e._t==='inc'?'inc':'')+'">'+(e._t==='inc'?'+':'−')+fmt(e.amount)+'</span>'+
+      '<button class="del" aria-label="删除" onclick="'+(e._t==='inc'?'delIncome':'delExpense')+'(\''+e.id+'\')">✕</button>'+
+    '</li>';
+  }).join('');
+}
+
+/* ================= 待办事项 ================= */
+function addTodo(){
+  const t = document.getElementById('todoText');
+  if(!t.value.trim()){ flashErr(t); return; }
+  state.todos.push({id:uid(),text:t.value.trim(),memberId:document.getElementById('todoMember').value,done:false});
+  t.value=''; save(); renderTodos();
+}
+function toggleTodo(id){ const x=state.todos.find(t=>t.id===id); if(x){x.done=!x.done; save(); renderTodos();} }
+function delTodo(id){ state.todos=state.todos.filter(t=>t.id!==id); save(); renderTodos(); }
+function renderTodos(){
+  const list=document.getElementById('todoList');
+  const open = state.todos.filter(t=>!t.done).length;
+  document.getElementById('todoCount').textContent = state.todos.length? '还剩 '+open+' 件':'';
+  if(!state.todos.length){ list.innerHTML='<li class="empty">暂时没有待办,享受清闲时光 ☕</li>'; return; }
+  const sorted=[...state.todos].sort((a,b)=>a.done-b.done);
+  list.innerHTML = sorted.map(t=>
+    '<li class="item '+(t.done?'done':'')+'">'+
+      '<input type="checkbox" '+(t.done?'checked':'')+' aria-label="完成" onchange="toggleTodo(\''+t.id+'\')">'+
+      '<div class="main"><div class="title">'+esc(t.text)+'</div><div class="meta">'+memberTag(t.memberId)+'</div></div>'+
+      '<button class="del" aria-label="删除待办" onclick="delTodo(\''+t.id+'\')">✕</button>'+
+    '</li>').join('');
+}
+
+/* ================= 购物清单 ================= */
+function addShop(){
+  const t=document.getElementById('shopText');
+  if(!t.value.trim()){ flashErr(t); return; }
+  t.value.split(/[,,、]/).map(s=>s.trim()).filter(Boolean)
+    .forEach(s=> state.shopping.push({id:uid(),text:s,done:false}));
+  t.value=''; save(); renderShop();
+}
+function toggleShop(id){ const x=state.shopping.find(t=>t.id===id); if(x){x.done=!x.done; save(); renderShop();} }
+function delShop(id){ state.shopping=state.shopping.filter(t=>t.id!==id); save(); renderShop(); }
+function renderShop(){
+  const list=document.getElementById('shopList');
+  const open=state.shopping.filter(s=>!s.done).length;
+  document.getElementById('shopCount').textContent = state.shopping.length? '待买 '+open+' 样':'';
+  if(!state.shopping.length){ list.innerHTML='<li class="empty">清单是空的。小提示:可以用逗号一次添加多样,如"鸡蛋,牛奶,青菜"</li>'; return; }
+  const sorted=[...state.shopping].sort((a,b)=>a.done-b.done);
+  list.innerHTML = sorted.map(s=>
+    '<li class="item '+(s.done?'done':'')+'">'+
+      '<input type="checkbox" '+(s.done?'checked':'')+' aria-label="已购买" onchange="toggleShop(\''+s.id+'\')">'+
+      '<div class="main"><div class="title">'+esc(s.text)+'</div></div>'+
+      '<button class="del" aria-label="删除" onclick="delShop(\''+s.id+'\')">✕</button>'+
+    '</li>').join('');
+}
+
+/* ================= 留言板 ================= */
+function addNote(){
+  const t=document.getElementById('noteText');
+  if(!t.value.trim()){ flashErr(t); return; }
+  state.notes.unshift({id:uid(),text:t.value.trim(),memberId:document.getElementById('noteMember').value,ts:Date.now()});
+  state.notes = state.notes.slice(0,20);
+  t.value=''; save(); renderNotes();
+}
+function delNote(id){ state.notes=state.notes.filter(n=>n.id!==id); save(); renderNotes(); }
+function renderNotes(){
+  const box=document.getElementById('noteList');
+  if(!state.notes.length){ box.innerHTML='<p class="empty">还没有留言。第一张便利贴,贴给谁呢?♡</p>'; return; }
+  box.innerHTML = state.notes.map(n=>{
+    const d=new Date(n.ts);
+    const when=(d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    return '<div class="note">'+
+      '<div class="txt">'+esc(n.text)+'</div>'+
+      '<div class="by"><span style="display:flex;align-items:center;gap:6px">'+memberTag(n.memberId)+' · '+when+'</span>'+
+      '<button class="del" aria-label="删除留言" onclick="delNote(\''+n.id+'\')">✕</button></div>'+
+    '</div>';
+  }).join('');
+}
+
+/* ================= 启动 ================= */
+function renderAll(){ renderHeader(); renderEvents(); renderTodos(); renderShop(); renderNotes(); renderFinance(); }
+document.getElementById('todoText').addEventListener('keydown',e=>{ if(e.key==='Enter') addTodo(); });
+document.getElementById('shopText').addEventListener('keydown',e=>{ if(e.key==='Enter') addShop(); });
+document.getElementById('evTitle').addEventListener('keydown',e=>{ if(e.key==='Enter') document.getElementById('evDate').focus(); });
+document.getElementById('expNote').addEventListener('keydown',e=>{ if(e.key==='Enter') addRecord(); });
+setRecType('exp');
+switchBudgetView('month');
+// 日期默认今天(跟随设备时钟,自动网络同步)
+document.getElementById('evDate').value = new Date().toLocaleDateString('sv');
+document.getElementById('expDate').value = new Date().toLocaleDateString('sv');
+load();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  var host = document.getElementById('cat3d');
+  if(!host || typeof THREE === 'undefined') return;
+
+  var W = host.clientWidth, H = host.clientHeight;
+  var scene = new THREE.Scene();
+  var camera = new THREE.PerspectiveCamera(32, W/H, 0.1, 100);
+  camera.position.set(0, 2.3, 10.2);
+  camera.lookAt(0, 1.7, 0);
+
+  var renderer = new THREE.WebGLRenderer({antialias:true, alpha:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.outputEncoding = THREE.sRGBEncoding;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  host.appendChild(renderer.domElement);
+
+  scene.add(new THREE.HemisphereLight(0xbfc4ff, 0x1a1420, 0.55));
+  var key = new THREE.DirectionalLight(0xfff4e6, 0.9); key.position.set(3, 8, 6); scene.add(key);
+  var pink = new THREE.PointLight(0xff4fd8, 1.6, 30); pink.position.set(-5, 3.5, 2.5); scene.add(pink);
+  var cyan = new THREE.PointLight(0x22e6ff, 1.4, 30); cyan.position.set(5.2, 2.2, -1.5); scene.add(cyan);
+  var under = new THREE.PointLight(0xff4fd8, 0.5, 12); under.position.set(0, -1.5, 3); scene.add(under);
+
+  var PORCELAIN = new THREE.MeshPhysicalMaterial({color:0xfaf6ef, roughness:0.22, metalness:0.02, clearcoat:1, clearcoatRoughness:0.12});
+  var REDLACQ  = new THREE.MeshPhysicalMaterial({color:0xd4353f, roughness:0.25, metalness:0.05, clearcoat:0.9, clearcoatRoughness:0.2});
+  var GOLD     = new THREE.MeshStandardMaterial({color:0xf0c24a, roughness:0.22, metalness:0.95});
+  var PINKIN   = new THREE.MeshPhysicalMaterial({color:0xf2a0b5, roughness:0.35, clearcoat:0.6});
+  var BASE     = new THREE.MeshStandardMaterial({color:0x14141d, roughness:0.35, metalness:0.7});
+
+  function sph(mat, sx, sy, sz){
+    var m = new THREE.Mesh(new THREE.SphereGeometry(1, 48, 36), mat);
+    m.scale.set(sx, sy, sz); return m;
+  }
+
+  var cat = new THREE.Group();
+
+  var body = sph(PORCELAIN, 1.32, 1.5, 1.18); body.position.y = 1.05; cat.add(body);
+  var head = sph(PORCELAIN, 1.12, 0.98, 1.0); head.position.y = 2.95; cat.add(head);
+
+  function ear(x){
+    var g = new THREE.Group();
+    var outer = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.62, 4), PORCELAIN);
+    outer.rotation.y = Math.PI/4; g.add(outer);
+    var inner = new THREE.Mesh(new THREE.ConeGeometry(0.19, 0.4, 4), PINKIN);
+    inner.rotation.y = Math.PI/4; inner.position.set(0, -0.04, 0.09); g.add(inner);
+    g.position.set(x, 3.85, -0.05); g.rotation.z = x > 0 ? -0.22 : 0.22;
+    return g;
+  }
+  cat.add(ear(-0.62)); cat.add(ear(0.62));
+
+  var fc = document.createElement('canvas'); fc.width = fc.height = 512;
+  var x = fc.getContext('2d');
+  x.strokeStyle = '#2b2430'; x.lineCap = 'round'; x.lineWidth = 14;
+  x.beginPath(); x.arc(160, 208, 46, Math.PI*1.15, Math.PI*1.85); x.stroke();
+  x.beginPath(); x.arc(352, 208, 46, Math.PI*1.15, Math.PI*1.85); x.stroke();
+  x.fillStyle = '#e8778f';
+  x.beginPath(); x.ellipse(256, 268, 22, 15, 0, 0, Math.PI*2); x.fill();
+  x.lineWidth = 10;
+  x.beginPath(); x.arc(226, 292, 30, Math.PI*0.15, Math.PI*0.85); x.stroke();
+  x.beginPath(); x.arc(286, 292, 30, Math.PI*0.15, Math.PI*0.85); x.stroke();
+  x.strokeStyle = 'rgba(43,36,48,.85)'; x.lineWidth = 7;
+  [[56,242,150,252],[52,282,148,282],[56,322,150,312],[456,242,362,252],[460,282,364,282],[456,322,362,312]]
+    .forEach(function(wk){ x.beginPath(); x.moveTo(wk[0],wk[1]); x.lineTo(wk[2],wk[3]); x.stroke(); });
+  x.fillStyle = 'rgba(240,140,160,.5)';
+  x.beginPath(); x.ellipse(120, 300, 34, 22, 0, 0, Math.PI*2); x.fill();
+  x.beginPath(); x.ellipse(392, 300, 34, 22, 0, 0, Math.PI*2); x.fill();
+  var faceTex = new THREE.CanvasTexture(fc);
+  var face = new THREE.Mesh(new THREE.PlaneGeometry(1.75, 1.75),
+    new THREE.MeshBasicMaterial({map:faceTex, transparent:true}));
+  face.position.set(0, 2.9, 0.99); cat.add(face);
+
+  var collar = new THREE.Mesh(new THREE.TorusGeometry(0.78, 0.11, 20, 48), REDLACQ);
+  collar.position.y = 2.12; collar.rotation.x = Math.PI/2 - 0.12; cat.add(collar);
+  var bell = sph(GOLD, 0.17, 0.17, 0.17); bell.position.set(0, 1.92, 0.78); cat.add(bell);
+
+  var armR = new THREE.Group(); armR.position.set(0.95, 1.35, 0.45);
+  var aR = sph(PORCELAIN, 0.3, 0.55, 0.3); aR.position.y = -0.2; armR.add(aR);
+  cat.add(armR);
+  var coin = new THREE.Group();
+  var disc = new THREE.Mesh(new THREE.CylinderGeometry(0.52, 0.52, 0.09, 40), GOLD);
+  disc.rotation.x = Math.PI/2; coin.add(disc);
+  var cc = document.createElement('canvas'); cc.width = cc.height = 256;
+  var cx = cc.getContext('2d');
+  cx.fillStyle = '#8a5b12'; cx.font = 'bold 150px serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle';
+  cx.fillText('\u798F', 128, 138);
+  var fuTex = new THREE.CanvasTexture(cc);
+  var fu = new THREE.Mesh(new THREE.CircleGeometry(0.42, 40),
+    new THREE.MeshBasicMaterial({map:fuTex, transparent:true}));
+  fu.position.z = 0.055; coin.add(fu);
+  coin.position.set(0.95, 0.85, 0.85); coin.rotation.x = -0.15; cat.add(coin);
+
+  var armL = new THREE.Group(); armL.position.set(-0.85, 2.2, 0.3);
+  var aL = sph(PORCELAIN, 0.28, 0.6, 0.28); aL.position.y = 0.45; armL.add(aL);
+  var pawL = sph(PORCELAIN, 0.3, 0.24, 0.3); pawL.position.y = 0.95; armL.add(pawL);
+  armL.rotation.z = 0.35; cat.add(armL);
+
+  var footL = sph(PORCELAIN, 0.42, 0.28, 0.55); footL.position.set(-0.55, 0.02, 0.62); cat.add(footL);
+  var footR = footL.clone(); footR.position.x = 0.55; cat.add(footR);
+  var tail = sph(PORCELAIN, 0.5, 0.22, 0.32); tail.position.set(0, 0.35, -1.15); cat.add(tail);
+
+  var plinth = new THREE.Mesh(new THREE.CylinderGeometry(1.9, 2.1, 0.35, 48), BASE);
+  plinth.position.y = -0.42; cat.add(plinth);
+  var trim = new THREE.Mesh(new THREE.TorusGeometry(2.0, 0.035, 12, 64),
+    new THREE.MeshBasicMaterial({color:0xff4fd8}));
+  trim.rotation.x = Math.PI/2; trim.position.y = -0.28; cat.add(trim);
+
+  cat.position.y = -1.55; cat.rotation.y = -0.3;
+  scene.add(cat);
+
+  var ring1 = new THREE.Mesh(new THREE.TorusGeometry(2.9, 0.045, 16, 96),
+    new THREE.MeshBasicMaterial({color:0xff4fd8}));
+  ring1.position.y = 0.4; ring1.rotation.x = Math.PI/2.25; scene.add(ring1);
+  var ring2 = new THREE.Mesh(new THREE.TorusGeometry(3.4, 0.03, 16, 96),
+    new THREE.MeshBasicMaterial({color:0x22e6ff}));
+  ring2.position.y = 0.9; ring2.rotation.x = Math.PI/1.85; ring2.rotation.y = 0.4; scene.add(ring2);
+
+  function glowSprite(hex, sx, sy, px, py, pz, op){
+    var gc = document.createElement('canvas'); gc.width = gc.height = 128;
+    var gx = gc.getContext('2d');
+    var grad = gx.createRadialGradient(64,64,2,64,64,62);
+    grad.addColorStop(0,'rgba(255,255,255,1)'); grad.addColorStop(1,'rgba(255,255,255,0)');
+    gx.fillStyle = grad; gx.fillRect(0,0,128,128);
+    var sp = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:new THREE.CanvasTexture(gc), color:hex, transparent:true, opacity:op,
+      blending:THREE.AdditiveBlending, depthWrite:false}));
+    sp.scale.set(sx, sy, 1); sp.position.set(px, py, pz); scene.add(sp);
+  }
+  glowSprite(0xff4fd8, 7, 7, -2.4, 2.2, -2, 0.28);
+  glowSprite(0x22e6ff, 6, 6, 2.8, 1.0, -2.5, 0.22);
+
+  var dragging=false, px_=0, py_=0, vel=0, idle=true, rotX=0;
+  host.addEventListener('pointerdown', function(e){ e.preventDefault(); dragging=true; idle=false; px_=e.clientX; py_=e.clientY; host.classList.add('dragging'); });
+  window.addEventListener('pointermove', function(e){
+    if(!dragging) return;
+    var dx=e.clientX-px_, dy=e.clientY-py_;
+    cat.rotation.y += dx*0.012;
+    rotX = Math.max(-0.35, Math.min(0.35, rotX + dy*0.005));
+    cat.rotation.x = rotX; vel = dx*0.012; px_=e.clientX; py_=e.clientY;
+  });
+  window.addEventListener('pointerup', function(){
+    if(!dragging) return;
+    dragging=false; host.classList.remove('dragging');
+    setTimeout(function(){ idle=true; }, 2600);
+  });
+
+  var t=0;
+  (function loop(){
+    requestAnimationFrame(loop);
+    t += 0.016;
+    if(!dragging){
+      cat.rotation.y += idle ? 0.0035 : vel; vel *= 0.95;
+      cat.rotation.x += (0 - cat.rotation.x)*0.04; rotX = cat.rotation.x;
+    }
+    armL.rotation.z = 0.35 + Math.sin(t*3.2)*0.28;
+    cat.position.y = -1.55 + Math.sin(t*1.3)*0.04;
+    ring1.rotation.z += 0.0035; ring2.rotation.z -= 0.0028;
+    pink.intensity = 1.6 + Math.sin(t*2.1)*0.25;
+    cyan.intensity = 1.4 + Math.sin(t*1.7 + 2)*0.2;
+    renderer.render(scene, camera);
+  })();
+
+  window.addEventListener('resize', function(){
+    var w = host.clientWidth, h = host.clientHeight;
+    camera.aspect = w/h; camera.updateProjectionMatrix(); renderer.setSize(w, h);
+  });
+})();
+</script>
+</body>
+
+</html>
