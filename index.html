@@ -24,6 +24,7 @@
     --matcha-deep:#7C9B78;
     --sakura:#E8B7BC;
     --sora:#A9C3D4;
+    --sora-deep:#6F94AD;
     --anzu:#E6C079;
     --anzu-deep:#D0A34F;
     --danger:#D08770;
@@ -88,6 +89,11 @@
   li.item.done .title{text-decoration:line-through;color:var(--ink-soft)}
   .del{border:none;background:none;color:#CFC8BB;cursor:pointer;font-size:15px;line-height:1;padding:2px;font-family:var(--round)}
   .del:hover{color:var(--danger)}
+  .edit{border:none;background:none;color:#CFC8BB;cursor:pointer;font-size:14px;line-height:1;padding:2px;font-family:var(--round)}
+  .edit:hover{color:var(--matcha-deep)}
+  li.item.editing{background:#FBF6EA;box-shadow:inset 0 0 0 1.5px var(--anzu);border-radius:10px;padding-left:8px;padding-right:6px;border-bottom-color:transparent}
+  .btn.ghost{background:none;color:var(--ink-soft);box-shadow:inset 0 0 0 1.5px var(--line)}
+  .btn.ghost:hover{background:var(--bg);color:var(--ink)}
   input[type=checkbox]{width:19px;height:19px;accent-color:var(--matcha-deep);margin-top:2px;cursor:pointer;flex:none;border-radius:50%}
   .empty{color:var(--ink-soft);font-size:13.5px;padding:10px 4px;line-height:1.7}
 
@@ -127,6 +133,23 @@
   .fin-summary{display:flex;justify-content:space-between;background:var(--bg);border-radius:14px;padding:10px 12px;margin-bottom:12px;font-size:12.5px;text-align:center;gap:8px;color:var(--ink-soft)}
   .fin-summary .kpi{flex:1;min-width:72px}
   .fin-summary .kpi .v{font-weight:700;font-size:16px;margin-top:2px;color:var(--ink)}
+  .budget-top .tabs button{padding:4px 9px}
+
+  /* 收支趋势图 */
+  .trend-box{background:var(--bg);border-radius:14px;padding:13px 15px 9px;margin-bottom:12px}
+  .trend-top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:var(--ink-soft);margin-bottom:4px;flex-wrap:wrap;gap:6px}
+  .trend-top .hint{font-size:11px;opacity:.75}
+  .trend-legend{display:flex;gap:8px}
+  .trend-legend button{border:none;background:none;font-family:var(--round);font-size:12px;color:var(--ink-soft);display:flex;align-items:center;gap:5px;cursor:pointer;padding:2px 5px;border-radius:8px;transition:opacity .25s}
+  .trend-legend i{width:14px;height:3.5px;border-radius:2px;display:inline-block}
+  .trend-box svg{width:100%;height:auto;display:block}
+  .tl{fill:none;stroke-width:2.4;stroke-linecap:round;cursor:pointer;transition:opacity .25s,stroke-width .25s}
+  .tp{cursor:pointer;transition:opacity .25s}
+  .ta{pointer-events:none}
+  .trend-box.f-inc .s-exp,.trend-box.f-inc .s-net,
+  .trend-box.f-exp .s-inc,.trend-box.f-exp .s-net,
+  .trend-box.f-net .s-inc,.trend-box.f-net .s-exp{opacity:.15}
+  .trend-box.f-inc .tl.s-inc,.trend-box.f-exp .tl.s-exp,.trend-box.f-net .tl.s-net{stroke-width:3.2}
 
   /* 留言板 */
   .note{background:#FFF6EC;border:1.5px solid #F3E3CC;border-radius:14px;padding:11px 13px;margin-bottom:10px;position:relative}
@@ -303,9 +326,21 @@
       <h2>家庭财务</h2>
 
       <div class="fin-summary">
-        <div class="kpi"><div>本月收入</div><div class="v" id="sumInc" style="color:var(--matcha-deep)">¥0</div></div>
-        <div class="kpi"><div>本月支出</div><div class="v" id="sumExp" style="color:var(--danger)">¥0</div></div>
-        <div class="kpi"><div>本月结余</div><div class="v" id="sumNet">¥0</div></div>
+        <div class="kpi"><div id="kpiIncL">本月收入</div><div class="v" id="sumInc" style="color:var(--matcha-deep)">¥0</div></div>
+        <div class="kpi"><div id="kpiExpL">本月支出</div><div class="v" id="sumExp" style="color:var(--danger)">¥0</div></div>
+        <div class="kpi"><div id="kpiNetL">本月结余</div><div class="v" id="sumNet">¥0</div></div>
+      </div>
+
+      <div class="trend-box" id="trendBox">
+        <div class="trend-top">
+          <span>收支趋势 <span class="hint">· 点曲线或图例可聚焦</span></span>
+          <span class="trend-legend">
+            <button class="s-inc" onclick="focusTrend('inc')"><i style="background:var(--matcha-deep)"></i>收入</button>
+            <button class="s-exp" onclick="focusTrend('exp')"><i style="background:var(--danger)"></i>支出</button>
+            <button class="s-net" onclick="focusTrend('net')"><i style="background:var(--sora-deep)"></i>结余</button>
+          </span>
+        </div>
+        <div id="trendChart"></div>
       </div>
 
       <div class="budget-box">
@@ -313,7 +348,10 @@
           <span style="display:flex;align-items:center;gap:10px">预算规划
             <span class="tabs">
               <button id="tabYear" onclick="switchBudgetView('year')">年度</button>
+              <button id="tabQuarter" onclick="switchBudgetView('quarter')">季度</button>
               <button id="tabMonth" onclick="switchBudgetView('month')">月度</button>
+              <button id="tabWeek" onclick="switchBudgetView('week')">每周</button>
+              <button id="tabDay" onclick="switchBudgetView('day')">每天</button>
             </span>
           </span>
           <button class="linkbtn" onclick="toggleBudgetEdit()">设置预算</button>
@@ -335,6 +373,7 @@
         <input type="text" id="expNote" class="grow" placeholder="备注(可选)" maxlength="30">
         <select id="expMember"></select>
         <button class="btn" id="recBtn" onclick="addRecord()">记支出</button>
+        <button class="btn ghost" id="recCancel" onclick="cancelEditRec()" style="display:none">取消</button>
       </div>
       <ul id="expList"></ul>
     </section>
@@ -861,6 +900,39 @@ const yearKey  = () => new Date().toLocaleDateString('sv').slice(0,4);
 let budgetView = 'month';
 let recType = 'exp';
 
+/* 周期定义:label 用于抬头,unit 用于预算文案,factor 为一年内的期数 */
+const PERIODS = {
+  year:   {label:'今年',   unit:'年度', factor:1},
+  quarter:{label:'本季度', unit:'季度', factor:4},
+  month:  {label:'本月',   unit:'月度', factor:12},
+  week:   {label:'本周',   unit:'每周', factor:52},
+  day:    {label:'今日',   unit:'每天', factor:365}
+};
+const BUDGET_VIEWS = ['year','quarter','month','week','day'];
+const dayKey = () => new Date().toLocaleDateString('sv');
+const pd = s => new Date(s+'T00:00:00');
+function weekStart(d){ const x=new Date(d); x.setHours(0,0,0,0); x.setDate(x.getDate()-(x.getDay()+6)%7); return x; }
+function inScope(dateStr, view){
+  const now = new Date();
+  if(view==='day')   return dateStr === dayKey();
+  if(view==='month') return dateStr.startsWith(monthKey());
+  if(view==='year')  return dateStr.startsWith(yearKey());
+  if(view==='quarter'){
+    const p = dateStr.split('-');
+    return +p[0]===now.getFullYear() && Math.floor((+p[1]-1)/3)===Math.floor(now.getMonth()/3);
+  }
+  const ws = weekStart(now), we = new Date(ws); we.setDate(we.getDate()+7);
+  const d = pd(dateStr);
+  return d>=ws && d<we;
+}
+/* 当前视图的预算:月/年直接取,季/周/日按年度预算换算 */
+function budgetFor(view){
+  if(view==='month'||view==='year') return state.budget[view] || {};
+  const y = state.budget.year || {}, f = PERIODS[view].factor, o = {};
+  Object.entries(y).forEach(([c,v])=>{ o[c] = Math.round(v/f*100)/100; });
+  return o;
+}
+
 /* 支出/收入切换 */
 function setRecType(t){
   recType = t;
@@ -868,13 +940,43 @@ function setRecType(t){
   document.getElementById('segInc').className = t==='inc' ? 'on-inc' : '';
   const cats = t==='exp' ? CATS_EXP : CATS_INC;
   document.getElementById('expCat').innerHTML = cats.map(c=>'<option>'+c+'</option>').join('');
-  document.getElementById('recBtn').textContent = t==='exp' ? '记支出' : '记收入';
+  document.getElementById('recBtn').textContent = editingRec ? '保存修改' : (t==='exp' ? '记支出' : '记收入');
 }
-/* 年度/月度切换 */
+/* 编辑一笔收支:填回表单,保存时原位更新 */
+let editingRec = null;
+function editRecord(id, type){ if(!requireLogin()) return;
+  const rec = (type==='inc' ? state.incomes : state.expenses).find(e=>e.id===id);
+  if(!rec) return;
+  editingRec = {id, type};
+  setRecType(type);
+  const sel = document.getElementById('expCat');
+  if(![...sel.options].some(o=>o.value===rec.cat))
+    sel.insertAdjacentHTML('beforeend','<option>'+esc(rec.cat)+'</option>');
+  sel.value = rec.cat;
+  document.getElementById('expAmount').value = rec.amount;
+  document.getElementById('expDate').value = rec.date;
+  document.getElementById('expNote').value = rec.note || '';
+  document.getElementById('expMember').value = rec.memberId || '';
+  document.getElementById('recCancel').style.display = '';
+  renderFinance();
+  document.getElementById('recBtn').closest('.row').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function cancelEditRec(){
+  editingRec = null;
+  document.getElementById('expAmount').value = '';
+  document.getElementById('expNote').value = '';
+  document.getElementById('expDate').value = new Date().toLocaleDateString('sv');
+  document.getElementById('recBtn').textContent = recType==='exp' ? '记支出' : '记收入';
+  document.getElementById('recCancel').style.display = 'none';
+  renderFinance();
+}
+/* 年度/季度/月度/每周/每天切换 */
 function switchBudgetView(v){
   budgetView = v;
-  document.getElementById('tabYear').className  = v==='year' ? 'on' : '';
-  document.getElementById('tabMonth').className = v==='month' ? 'on' : '';
+  BUDGET_VIEWS.forEach(k=>{
+    const el = document.getElementById('tab'+k[0].toUpperCase()+k.slice(1));
+    if(el) el.className = k===v ? 'on' : '';
+  });
   document.getElementById('budgetGrid').classList.remove('open');
   renderFinance();
 }
@@ -882,11 +984,11 @@ function switchBudgetView(v){
 function toggleBudgetEdit(){ if(!requireLogin()) return;
   const grid = document.getElementById('budgetGrid');
   if(grid.classList.contains('open')){ grid.classList.remove('open'); return; }
-  const b = state.budget[budgetView] || {};
+  const b = budgetFor(budgetView);
   grid.innerHTML = CATS_EXP.map(c=>
     '<label>'+c+'<input type="text" inputmode="decimal" data-cat="'+c+'" value="'+(b[c]||'')+'" placeholder="0"></label>'
   ).join('') +
-  '<span class="saverow"><button class="btn small" onclick="saveBudget()">保存'+(budgetView==='year'?'年度':'月度')+'预算</button></span>';
+  '<span class="saverow"><button class="btn small" onclick="saveBudget()">保存'+PERIODS[budgetView].unit+'预算</button></span>';
   grid.classList.add('open');
 }
 function saveBudget(){ if(!requireLogin()) return;
@@ -900,64 +1002,215 @@ function saveBudget(){ if(!requireLogin()) return;
     if(n>0) b[inp.dataset.cat] = n;
   });
   if(bad){ toast('有的金额格式不对哦'); return; }
-  state.budget[budgetView] = b;
-  // 双向自动同步:月度 ↔ 年度
+  // 双向自动同步:任何周期都换算并存入 年度 + 月度
   if(budgetView==='month'){
+    state.budget.month = b;
     const y = {};
     Object.entries(b).forEach(([c,v])=>{ y[c] = Math.round(v*12*100)/100; });
     state.budget.year = y;
-  }else{
+  }else if(budgetView==='year'){
+    state.budget.year = b;
     const m = {};
     Object.entries(b).forEach(([c,v])=>{ m[c] = Math.round(v/12*100)/100; });
     state.budget.month = m;
+  }else{
+    const f = PERIODS[budgetView].factor, y = {}, m = {};
+    Object.entries(b).forEach(([c,v])=>{ y[c] = Math.round(v*f*100)/100; });
+    Object.entries(y).forEach(([c,v])=>{ m[c] = Math.round(v/12*100)/100; });
+    state.budget.year = y; state.budget.month = m;
   }
   grid.classList.remove('open');
   save(); renderFinance();
-  toast(budgetView==='year' ? '年度预算已保存,已自动分解到月度(÷12)' : '月度预算已保存,已自动归属年度(×12)');
+  toast(budgetView==='year' ? '年度预算已保存,已自动分解到月度(÷12)'
+    : budgetView==='month' ? '月度预算已保存,已自动归属年度(×12)'
+    : PERIODS[budgetView].unit+'预算已保存,已自动换算为年度(×'+PERIODS[budgetView].factor+')和月度');
 }
-/* 记一笔(支出或收入) */
+/* 记一笔(支出或收入);编辑模式下则保存修改 */
 function addRecord(){ if(!requireLogin()) return;
   const a = document.getElementById('expAmount');
   const amount = parseFloat(a.value);
   if(!amount || amount<=0){ flashErr(a); toast('请输入正确的金额'); return; }
   const d = document.getElementById('expDate');
-  const rec = {
-    id:uid(), amount:Math.round(amount*100)/100,
+  const vals = {
+    amount:Math.round(amount*100)/100,
     cat:document.getElementById('expCat').value,
     note:document.getElementById('expNote').value.trim(),
     memberId:document.getElementById('expMember').value,
-    date: d.value || new Date().toLocaleDateString('sv'),
-    ts:Date.now()
+    date: d.value || new Date().toLocaleDateString('sv')
   };
+  if(editingRec){
+    const rec = (editingRec.type==='inc' ? state.incomes : state.expenses).find(e=>e.id===editingRec.id);
+    if(rec){
+      Object.assign(rec, vals);
+      if(recType!==editingRec.type){ // 支出↔收入 类型改了,挪到另一边
+        if(editingRec.type==='inc') state.incomes = state.incomes.filter(e=>e.id!==rec.id);
+        else state.expenses = state.expenses.filter(e=>e.id!==rec.id);
+        if(recType==='exp') state.expenses.push(rec); else state.incomes.push(rec);
+      }
+    }
+    cancelEditRec();
+    save(); renderFinance();
+    toast('这笔已改好 ✓');
+    return;
+  }
+  const rec = {id:uid(), ...vals, ts:Date.now()};
   if(recType==='exp') state.expenses.push(rec); else state.incomes.push(rec);
   a.value=''; document.getElementById('expNote').value='';
   d.value = new Date().toLocaleDateString('sv');
   save(); renderFinance();
 }
-function delExpense(id){ if(!requireLogin()) return; state.expenses=state.expenses.filter(e=>e.id!==id); save(); renderFinance(); }
-function delIncome(id){ if(!requireLogin()) return; state.incomes=state.incomes.filter(e=>e.id!==id); save(); renderFinance(); }
+function delExpense(id){ if(!requireLogin()) return; if(editingRec&&editingRec.id===id) cancelEditRec(); state.expenses=state.expenses.filter(e=>e.id!==id); save(); renderFinance(); }
+function delIncome(id){ if(!requireLogin()) return; if(editingRec&&editingRec.id===id) cancelEditRec(); state.incomes=state.incomes.filter(e=>e.id!==id); save(); renderFinance(); }
+
+/* ============ 收支趋势曲线 ============ */
+let trendFocus = null;
+function focusTrend(s){ trendFocus = trendFocus===s ? null : s; renderTrend(); }
+const fmtShort = n => {
+  const a = Math.abs(n);
+  if(a>=10000) return (n/10000).toFixed(a>=100000?0:1).replace(/\.0$/,'')+'万';
+  return ''+Math.round(n);
+};
+/* 每个时间桶:{label, from(含), to(不含)} */
+function trendBuckets(view){
+  const now = new Date(), out = [];
+  const push = (label,from,to)=>out.push({label,from,to});
+  if(view==='day'){
+    for(let i=13;i>=0;i--){
+      const f = new Date(now.getFullYear(),now.getMonth(),now.getDate()-i);
+      const t = new Date(f); t.setDate(t.getDate()+1);
+      push((f.getMonth()+1)+'/'+f.getDate(),f,t);
+    }
+  }else if(view==='week'){
+    const ws = weekStart(now);
+    for(let i=11;i>=0;i--){
+      const f = new Date(ws); f.setDate(f.getDate()-7*i);
+      const t = new Date(f); t.setDate(t.getDate()+7);
+      push((f.getMonth()+1)+'/'+f.getDate(),f,t);
+    }
+  }else if(view==='month'){
+    for(let i=11;i>=0;i--){
+      const f = new Date(now.getFullYear(),now.getMonth()-i,1);
+      const t = new Date(now.getFullYear(),now.getMonth()-i+1,1);
+      push((f.getMonth()+1)+'月',f,t);
+    }
+  }else if(view==='quarter'){
+    const qm = Math.floor(now.getMonth()/3)*3;
+    for(let i=7;i>=0;i--){
+      const f = new Date(now.getFullYear(),qm-3*i,1);
+      const t = new Date(now.getFullYear(),qm-3*i+3,1);
+      push((f.getFullYear()%100)+'年Q'+(Math.floor(f.getMonth()/3)+1),f,t);
+    }
+  }else{
+    for(let i=5;i>=0;i--){
+      const f = new Date(now.getFullYear()-i,0,1);
+      const t = new Date(now.getFullYear()-i+1,0,1);
+      push(f.getFullYear()+'',f,t);
+    }
+  }
+  return out;
+}
+/* Catmull-Rom 平滑曲线(控制点夹在相邻两点之间,避免过冲) */
+function smoothPath(pts){
+  if(pts.length<2) return '';
+  let d = 'M'+pts[0][0].toFixed(1)+' '+pts[0][1].toFixed(1);
+  for(let i=0;i<pts.length-1;i++){
+    const p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||p2;
+    const lo=Math.min(p1[1],p2[1]), hi=Math.max(p1[1],p2[1]);
+    const c1y=Math.min(hi,Math.max(lo,p1[1]+(p2[1]-p0[1])/6));
+    const c2y=Math.min(hi,Math.max(lo,p2[1]-(p3[1]-p1[1])/6));
+    d += 'C'+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+' '+c1y.toFixed(1)+','
+           +(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+' '+c2y.toFixed(1)+','
+           +p2[0].toFixed(1)+' '+p2[1].toFixed(1);
+  }
+  return d;
+}
+function renderTrend(){
+  const chart = document.getElementById('trendChart');
+  const box = document.getElementById('trendBox');
+  if(!chart||!box) return;
+  box.className = 'trend-box' + (trendFocus ? ' f-'+trendFocus : '');
+  const buckets = trendBuckets(budgetView);
+  const sumIn = (arr,f,t)=>arr.reduce((s,e)=>{ const d=pd(e.date); return d>=f&&d<t ? s+e.amount : s; },0);
+  const inc = buckets.map(b=>sumIn(state.incomes,b.from,b.to));
+  const exp = buckets.map(b=>sumIn(state.expenses,b.from,b.to));
+  const net = inc.map((v,i)=>v-exp[i]);
+  const SERIES = [
+    {k:'net', name:'结余', color:'var(--sora-deep)',   data:net},
+    {k:'exp', name:'支出', color:'var(--danger)',      data:exp},
+    {k:'inc', name:'收入', color:'var(--matcha-deep)', data:inc}
+  ];
+  const cw = chart.clientWidth || 640;
+  const W = Math.max(320, Math.min(cw, 760)), H=210, L=46, R=12, T=16, B=26, n=buckets.length;
+  const lo0 = Math.min(0,...net), hi0 = Math.max(...inc,...exp,...net,0);
+  const span0 = hi0-lo0;
+  const padV = span0>0 ? span0*0.08 : 50;
+  const yMin = lo0-(lo0<0?padV:0), yMax = hi0+padV;
+  const X = i => L + (W-L-R)*(n===1?0.5:i/(n-1));
+  const Y = v => T + (H-T-B)*(1-(v-yMin)/(yMax-yMin));
+  let svg = '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+  /* 横向网格与 Y 轴标签 */
+  for(let t=0;t<4;t++){
+    const v = yMin+(yMax-yMin)*t/3, y = Y(v);
+    svg += '<line x1="'+L+'" y1="'+y.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y.toFixed(1)+'" stroke="rgba(91,86,76,.1)" stroke-width="1"/>';
+    svg += '<text x="'+(L-7)+'" y="'+(y+3.5).toFixed(1)+'" text-anchor="end" font-size="10.5" fill="var(--ink-soft)">'+fmtShort(v)+'</text>';
+  }
+  /* 零线(有负结余时) */
+  if(yMin<0 && yMax>0){
+    const y0 = Y(0);
+    svg += '<line x1="'+L+'" y1="'+y0.toFixed(1)+'" x2="'+(W-R)+'" y2="'+y0.toFixed(1)+'" stroke="rgba(91,86,76,.35)" stroke-width="1" stroke-dasharray="3 4"/>';
+  }
+  /* X 轴标签(窄屏少放几个) */
+  const step = Math.ceil(n/(W<440?5:7));
+  buckets.forEach((b,i)=>{
+    if(i===n-1 || (i%step===0 && n-1-i>=step*0.7))
+      svg += '<text x="'+X(i).toFixed(1)+'" y="'+(H-7)+'" text-anchor="middle" font-size="10.5" fill="var(--ink-soft)">'+b.label+'</text>';
+  });
+  /* 三条曲线(聚焦者最后画、带渐变面积) */
+  const ordered = trendFocus ? SERIES.filter(s=>s.k!==trendFocus).concat(SERIES.filter(s=>s.k===trendFocus)) : SERIES;
+  ordered.forEach(s=>{
+    const pts = s.data.map((v,i)=>[X(i),Y(v)]);
+    if(trendFocus===s.k && n>1){
+      const base = Y(0);
+      svg += '<path class="ta s-'+s.k+'" d="'+smoothPath(pts)+' L'+X(n-1).toFixed(1)+' '+base.toFixed(1)+' L'+X(0).toFixed(1)+' '+base.toFixed(1)+' Z" fill="'+s.color+'" opacity="0.12"/>';
+    }
+    svg += '<path class="tl s-'+s.k+'" d="'+smoothPath(pts)+'" stroke="'+s.color+'" onclick="focusTrend(\''+s.k+'\')"/>';
+    pts.forEach(p=>{
+      svg += '<circle class="tp s-'+s.k+'" cx="'+p[0].toFixed(1)+'" cy="'+p[1].toFixed(1)+'" r="2.6" fill="'+s.color+'" onclick="focusTrend(\''+s.k+'\')"/>';
+    });
+  });
+  /* 没有任何记账时的提示 */
+  if(hi0===0 && lo0===0)
+    svg += '<text x="'+((L+W-R)/2)+'" y="'+((T+H-B)/2)+'" text-anchor="middle" font-size="12.5" fill="var(--ink-soft)">记几笔账,这里就会画出你们家的趋势曲线 ✦</text>';
+  svg += '</svg>';
+  chart.innerHTML = svg;
+}
 
 function renderFinance(){
-  const mk = monthKey(), yk = yearKey();
-  const mExp = state.expenses.filter(e=>e.date.startsWith(mk));
-  const mInc = state.incomes.filter(e=>e.date.startsWith(mk));
-  const mExpSum = mExp.reduce((s,e)=>s+e.amount,0);
-  const mIncSum = mInc.reduce((s,e)=>s+e.amount,0);
+  const P = PERIODS[budgetView];
+  const scopeExp = state.expenses.filter(e=>inScope(e.date,budgetView));
+  const scopeInc = state.incomes.filter(e=>inScope(e.date,budgetView));
+  const expSum = scopeExp.reduce((s,e)=>s+e.amount,0);
+  const incSum = scopeInc.reduce((s,e)=>s+e.amount,0);
 
-  /* 本月收支结余 */
-  document.getElementById('sumInc').textContent = fmt(mIncSum);
-  document.getElementById('sumExp').textContent = fmt(mExpSum);
-  const net = mIncSum - mExpSum;
+  /* 当前周期的收支结余(抬头随视图切换) */
+  document.getElementById('kpiIncL').textContent = P.label+'收入';
+  document.getElementById('kpiExpL').textContent = P.label+'支出';
+  document.getElementById('kpiNetL').textContent = P.label+'结余';
+  document.getElementById('sumInc').textContent = fmt(incSum);
+  document.getElementById('sumExp').textContent = fmt(expSum);
+  const net = incSum - expSum;
   const netEl = document.getElementById('sumNet');
   netEl.textContent = (net<0?'-':'') + fmt(Math.abs(net));
   netEl.style.color = net<0 ? 'var(--danger)' : 'var(--matcha-deep)';
 
-  /* 当前视图(年/月)的支出与预算 */
-  const scopeExp = budgetView==='month' ? mExp : state.expenses.filter(e=>e.date.startsWith(yk));
-  const spent = scopeExp.reduce((s,e)=>s+e.amount,0);
-  const b = state.budget[budgetView] || {};
+  /* 趋势曲线 */
+  renderTrend();
+
+  /* 当前视图的支出与预算 */
+  const spent = expSum;
+  const b = budgetFor(budgetView);
   const total = Object.values(b).reduce((s,v)=>s+v,0);
-  const label = budgetView==='month' ? '本月' : '今年';
+  const label = P.label;
 
   const fill = document.getElementById('budgetFill');
   const stat = document.getElementById('budgetStat');
@@ -970,7 +1223,7 @@ function renderFinance(){
       '<span style="color:'+(left<0?'var(--danger)':'var(--ink-soft)')+'">'+(left<0 ? '超支 '+fmt(-left) : '还剩 '+fmt(left))+'</span>';
   }else{
     fill.style.width = '0';
-    stat.innerHTML = '<span style="color:var(--ink-soft)">还没设置'+(budgetView==='month'?'月度':'年度')+'预算 — 点"设置预算",给每个项目定个数吧</span>';
+    stat.innerHTML = '<span style="color:var(--ink-soft)">还没设置'+PERIODS[budgetView].unit+'预算 — 点"设置预算",给每个项目定个数吧</span>';
   }
 
   /* 分项目:预算 vs 已用 */
@@ -1001,10 +1254,11 @@ function renderFinance(){
   }
   list.innerHTML = all.map(e=>{
     const p = e.date.split('-');
-    return '<li class="item">'+
+    return '<li class="item'+(editingRec&&editingRec.id===e.id?' editing':'')+'">'+
       '<div class="main"><div class="title">'+esc(e.cat)+(e.note?' · '+esc(e.note):'')+'</div>'+
       '<div class="meta">'+(+p[1])+'月'+(+p[2])+'日 · '+memberTag(e.memberId)+'</div></div>'+
       '<span class="amt '+(e._t==='inc'?'inc':'')+'">'+(e._t==='inc'?'+':'−')+fmt(e.amount)+'</span>'+
+      '<button class="edit" aria-label="编辑" onclick="editRecord(\''+e.id+'\',\''+e._t+'\')">✎</button>'+
       '<button class="del" aria-label="删除" onclick="'+(e._t==='inc'?'delIncome':'delExpense')+'(\''+e.id+'\')">✕</button>'+
     '</li>';
   }).join('');
@@ -1088,6 +1342,8 @@ document.getElementById('evTitle').addEventListener('keydown',e=>{ if(e.key==='E
 document.getElementById('expNote').addEventListener('keydown',e=>{ if(e.key==='Enter') addRecord(); });
 setRecType('exp');
 switchBudgetView('month');
+// 屏幕宽度变化时重绘趋势图(如手机横竖屏切换)
+let trendRz; window.addEventListener('resize',()=>{ clearTimeout(trendRz); trendRz=setTimeout(renderTrend,200); });
 // 日期默认今天(跟随设备时钟,自动网络同步)
 document.getElementById('evDate').value = new Date().toLocaleDateString('sv');
 document.getElementById('expDate').value = new Date().toLocaleDateString('sv');
