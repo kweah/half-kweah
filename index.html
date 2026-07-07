@@ -91,6 +91,14 @@
   .del:hover{color:var(--danger)}
   .edit{border:none;background:none;color:#CFC8BB;cursor:pointer;font-size:14px;line-height:1;padding:2px;font-family:var(--round)}
   .edit:hover{color:var(--matcha-deep)}
+  .del.confirming{color:var(--danger);font-weight:700;font-size:12px;white-space:nowrap}
+  .list-filter{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 4px;font-size:12px;color:var(--ink-soft)}
+  .list-filter select{padding:5px 10px;font-size:12.5px;border-radius:10px}
+  .list-filter .fsum{margin-left:auto;text-align:right}
+  .seg.mini button{padding:3px 10px;font-size:12px}
+  .loadmore{width:100%;border:none;background:none;color:var(--matcha-deep);font-family:var(--round);font-size:13px;padding:10px 0 4px;cursor:pointer}
+  .loadmore:hover{text-decoration:underline}
+  .who-pill button{color:var(--matcha-deep);font-weight:500}
   li.item.editing{background:#FBF6EA;box-shadow:inset 0 0 0 1.5px var(--anzu);border-radius:10px;padding-left:8px;padding-right:6px;border-bottom-color:transparent}
   .btn.ghost{background:none;color:var(--ink-soft);box-shadow:inset 0 0 0 1.5px var(--line)}
   .btn.ghost:hover{background:var(--bg);color:var(--ink)}
@@ -375,6 +383,15 @@
         <button class="btn" id="recBtn" onclick="addRecord()">记支出</button>
         <button class="btn ghost" id="recCancel" onclick="cancelEditRec()" style="display:none">取消</button>
       </div>
+      <div class="list-filter">
+        <span class="seg mini">
+          <button id="ftAll" onclick="setFinType('all')">全部</button>
+          <button id="ftExp" onclick="setFinType('exp')">支出</button>
+          <button id="ftInc" onclick="setFinType('inc')">收入</button>
+        </span>
+        <select id="finMonth" onchange="setFinMonth(this.value)"></select>
+        <span class="fsum" id="finSum"></span>
+      </div>
       <ul id="expList"></ul>
     </section>
 
@@ -420,11 +437,31 @@
 <div id="loginOverlay" style="display:none;position:fixed;inset:0;z-index:99;background:rgba(20,18,24,.55);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 26px;max-width:340px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.25)">
     <div style="font-family:var(--round);font-size:18px;font-weight:700;margin-bottom:6px">🏠 家庭云同步</div>
-    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;line-height:1.7">登录家庭共享账号,数据就会在你和惠婷的手机之间实时同步。每台设备只需登录一次。</div>
+    <div id="lgDesc" style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;line-height:1.7">登录后,全家人的数据在所有设备之间实时同步。每台设备只需登录一次。</div>
     <input id="lgEmail" type="email" placeholder="邮箱" autocomplete="username" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--bg);color:var(--ink)">
     <input id="lgPass" type="password" placeholder="密码" autocomplete="current-password" style="width:100%;box-sizing:border-box;margin-bottom:16px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--bg);color:var(--ink)">
-    <button id="lgBtn" onclick="doLogin()" style="width:100%;padding:12px;border:none;border-radius:12px;background:var(--matcha-deep);color:#fff;font-size:14.5px;font-weight:700;font-family:var(--round);cursor:pointer">登录</button>
-    <div style="font-size:11px;color:var(--ink-soft);margin-top:12px;text-align:center">暂不登录可以浏览,登录后才能编辑和同步 <a href="javascript:void(0)" onclick="hideLogin()" style="color:var(--matcha-deep)">先跳过</a></div>
+    <button id="lgBtn" onclick="submitAuth()" style="width:100%;padding:12px;border:none;border-radius:12px;background:var(--matcha-deep);color:#fff;font-size:14.5px;font-weight:700;font-family:var(--round);cursor:pointer">登录</button>
+    <div style="font-size:12px;color:var(--ink-soft);margin-top:12px;text-align:center"><a href="javascript:void(0)" id="lgSwitch" onclick="toggleAuthMode()" style="color:var(--matcha-deep)">没有账号?注册一个 →</a></div>
+    <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;text-align:center">暂不登录可以浏览,登录后才能编辑和同步 <a href="javascript:void(0)" onclick="hideLogin()" style="color:var(--matcha-deep)">先跳过</a></div>
+  </div>
+</div>
+<div id="famOverlay" style="display:none;position:fixed;inset:0;z-index:97;background:rgba(20,18,24,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:28px 26px;max-width:340px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.25)">
+    <div style="font-family:var(--round);font-size:18px;font-weight:700;margin-bottom:6px">🏡 建立你的家庭空间</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:18px;line-height:1.7">创建一个新家庭,把生成的邀请码发给家人;或者输入家人给你的邀请码加入 TA 的家庭。</div>
+    <input id="famName" type="text" maxlength="16" placeholder="家庭名字,比如:小华之家" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--bg);color:var(--ink)">
+    <button id="famCreateBtn" onclick="createFamily()" style="width:100%;padding:12px;border:none;border-radius:12px;background:var(--matcha-deep);color:#fff;font-size:14.5px;font-weight:700;font-family:var(--round);cursor:pointer">创建新家庭</button>
+    <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--ink-soft);font-size:11px"><span style="flex:1;height:1px;background:var(--line)"></span>或<span style="flex:1;height:1px;background:var(--line)"></span></div>
+    <input id="famCode" type="text" maxlength="6" placeholder="6 位邀请码,比如:A3F9KB" autocapitalize="characters" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--bg);color:var(--ink);text-transform:uppercase;letter-spacing:.2em">
+    <button id="famJoinBtn" onclick="joinFamily()" style="width:100%;padding:12px;border:1.5px solid var(--matcha-deep);border-radius:12px;background:none;color:var(--matcha-deep);font-size:14.5px;font-weight:700;font-family:var(--round);cursor:pointer">凭邀请码加入</button>
+    <div style="font-size:11px;color:var(--ink-soft);margin-top:12px;text-align:center"><a href="javascript:void(0)" onclick="document.getElementById('famOverlay').style.display='none'" style="color:var(--matcha-deep)">先逛逛(仅浏览)</a> · <a href="javascript:void(0)" onclick="famLogout()" style="color:var(--matcha-deep)">登出</a></div>
+  </div>
+</div>
+<div id="whoOverlay" style="display:none;position:fixed;inset:0;z-index:98;background:rgba(20,18,24,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this&&localStorage.getItem('fh:whoami'))this.style.display='none'">
+  <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 24px;max-width:320px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.25);text-align:center">
+    <div style="font-family:var(--round);font-size:17px;font-weight:700;margin-bottom:6px">👋 这台设备是谁在用?</div>
+    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;line-height:1.7">选好之后,记账、待办等会默认记在这个名字下,不容易选错人。以后点顶栏的「本机」随时可以换。</div>
+    <div id="whoBtns" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"></div>
   </div>
 </div>
 <div id="toast" role="status"></div>
@@ -436,10 +473,7 @@
 const KEY = 'family-hub:data';
 const PALETTE = ['#E8B7BC','#9DB89A','#A9C3D4','#E6C079','#B8A6C9','#8FBFB2'];
 let state = {
-  members: [
-    {id:'m1',name:'惠婷',color:PALETTE[0]},
-    {id:'m2',name:'帅哥',color:PALETTE[2]}
-  ],
+  members: [],   // 首次使用时在顶栏自行添加家庭成员
   events: [], todos: [], shopping: [], notes: [],
   expenses: [], incomes: [], budget: {month:{}, year:{}}
 };
@@ -449,6 +483,7 @@ const SUPA_KEY = 'sb_publishable_3iV-BlCEFV-9URlNkWAVuQ_yYd5ipHb';      // Setti
 
 const DEVICE_ID = (()=>{ let d=localStorage.getItem('fh:device'); if(!d){ d=Date.now().toString(36)+Math.random().toString(36).slice(2,8); localStorage.setItem('fh:device',d);} return d; })();
 let supa = null, synced = false;
+let FAMILY = null;   // {family_id, name, invite_code, legacy} 登录并加入家庭后填充
 
 function note(msg){ const n=document.getElementById('saveNote'); if(n) n.textContent = msg; }
 
@@ -468,6 +503,10 @@ function normalizeState(){
 
 function migrateMembers(){
   state.members = state.members || [];
+  // 只有创始家庭(legacy)才执行历史数据修正;登录前靠名字特征判断
+  const isLegacy = FAMILY ? !!FAMILY.legacy
+    : state.members.some(m=>['惠婷','慧婷','拉慧婷','帅哥'].includes(m.name));
+  if(!isLegacy) return;
   state.members.forEach(m=>{ if(m.name==='拉慧婷'||m.name==='慧婷') m.name='惠婷'; });
   const wanted = [
     {name:'惠婷', color:PALETTE[0]},
@@ -492,6 +531,7 @@ async function load(){
 
   if(!window.supabase || SUPA_URL.indexOf('填') === 0){
     note('本机模式:数据只保存在这台设备上(未配置云同步)');
+    askWhoami(false);
     return;
   }
   supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -504,9 +544,16 @@ async function afterAuth(){
   hideLogin();
   note('正在同步…');
   try{
-    const { data, error } = await supa.from('family_state').select('data,updated_at').eq('id','main').maybeSingle();
+    /* 先确认这个账号属于哪个家庭 */
+    const { data: fam, error: fe } = await supa.rpc('my_family');
+    if(fe) throw fe;
+    if(!fam){ showFamSetup(); note('创建或加入一个家庭后,就能开始云同步'); return; }
+    FAMILY = fam;
+    document.getElementById('famOverlay').style.display = 'none';
+
+    const { data, error } = await supa.from('family_state').select('data,updated_at').eq('id', FAMILY.family_id).maybeSingle();
     if(error) throw error;
-    if(data && data.data){
+    if(data && data.data && Object.keys(data.data).length){
       state = data.data;
       normalizeState();
       renderAll();
@@ -521,7 +568,10 @@ async function afterAuth(){
     subscribeRealtime();
     synced = true;
     const ab = document.getElementById('authBtn'); if(ab) ab.textContent = '登出';
-    note('云同步已开启 ⸝⸝ 两台手机都能实时看到彼此的修改');
+    note('云同步已开启 ⸝⸝ 「'+FAMILY.name+'」的成员都能实时看到彼此的修改');
+    renderHeader();
+    askWhoami(false);
+    if(!state.members.length) setTimeout(()=>toast('先在顶栏「+ 添加成员」把家人加进来吧'), 1200);
     loadAlbum();
   }catch(e){
     console.error(e);
@@ -529,10 +579,12 @@ async function afterAuth(){
   }
 }
 
+let rtChannel = null;
 function subscribeRealtime(){
-  supa.channel('family-sync')
+  if(rtChannel){ try{ supa.removeChannel(rtChannel); }catch(e){} }
+  rtChannel = supa.channel('family-'+FAMILY.family_id)
     .on('postgres_changes',
-      { event:'*', schema:'public', table:'family_state', filter:'id=eq.main' },
+      { event:'*', schema:'public', table:'family_state', filter:'id=eq.'+FAMILY.family_id },
       payload => {
         const row = payload.new;
         if(row && row.device !== DEVICE_ID && row.data){
@@ -547,9 +599,9 @@ function subscribeRealtime(){
 }
 
 async function pushRemote(){
-  if(!supa) return;
+  if(!supa || !FAMILY) return;
   const { error } = await supa.from('family_state').upsert({
-    id:'main', data: state, device: DEVICE_ID, updated_at: new Date().toISOString()
+    id: FAMILY.family_id, data: state, device: DEVICE_ID, updated_at: new Date().toISOString()
   });
   if(error){ console.error('云端保存失败', error); note('云端保存失败,数据暂存本机'); }
 }
@@ -677,7 +729,7 @@ async function uploadPhotos(input){
     strip.insertBefore(holder, strip.firstChild);
     try{
       const blob = await compressImage(f);
-      const path = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7) + '.jpg';
+      const path = FAMILY.family_id + '/' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7) + '.jpg';
       const { error } = await supa.storage.from(BUCKET).upload(path, blob, { contentType:'image/jpeg' });
       if(error) throw error;
       ok++;
@@ -696,10 +748,18 @@ async function loadAlbum(showTip){
     return;
   }
   try{
-    const { data, error } = await supa.storage.from(BUCKET)
-      .list('', { limit: 60, sortBy: { column: 'created_at', order: 'desc' } });
-    if(error) throw error;
-    const names = (data || []).filter(f => f.name && !f.name.startsWith('.')).map(f => f.name);
+    /* 自家文件夹;创始家庭还能看到早期存在根目录的老照片 */
+    const dirs = [FAMILY.family_id];
+    if(FAMILY.legacy) dirs.push('');
+    let names = [];
+    for(const d of dirs){
+      const { data, error } = await supa.storage.from(BUCKET)
+        .list(d, { limit: 60, sortBy: { column: 'created_at', order: 'desc' } });
+      if(error) throw error;
+      names.push(...(data || [])
+        .filter(f => f.id && f.name && !f.name.startsWith('.'))   // f.id 为空的是文件夹
+        .map(f => (d ? d + '/' : '') + f.name));
+    }
     if(!names.length){
       albumFiles = [];
       strip.innerHTML = '<div class="album-empty">还没有照片,点右上角"＋ 传照片"记录第一个瞬间吧</div>';
@@ -751,8 +811,12 @@ async function authAction(){
     if(!confirm('确定要登出吗?登出后将无法编辑,重新登录即可继续。')) return;
     try{ await supa.auth.signOut(); }catch(e){}
     synced = false;
+    FAMILY = null;
+    if(rtChannel){ try{ supa.removeChannel(rtChannel); }catch(e){} rtChannel = null; }
+    document.getElementById('famOverlay').style.display = 'none';
     const ab = document.getElementById('authBtn'); if(ab) ab.textContent = '登录';
     note('已登出:当前仅可浏览,登录后可编辑并同步');
+    renderHeader();
     loadAlbum();
     toast('已登出');
   }else if(supa){
@@ -761,17 +825,79 @@ async function authAction(){
     toast('云同步组件未加载,请检查网络后刷新页面');
   }
 }
+async function famLogout(){
+  try{ await supa.auth.signOut(); }catch(e){}
+  synced = false; FAMILY = null;
+  document.getElementById('famOverlay').style.display = 'none';
+  note('已登出:当前仅可浏览');
+  showLogin();
+}
 function showLogin(){ document.getElementById('loginOverlay').style.display='flex'; }
-function hideLogin(){ document.getElementById('loginOverlay').style.display='none'; }
-async function doLogin(){
+function hideLogin(){ document.getElementById('loginOverlay').style.display='none'; askWhoami(false); }
+let authMode = 'login';
+function toggleAuthMode(){
+  authMode = authMode==='login' ? 'signup' : 'login';
+  document.getElementById('lgBtn').textContent = authMode==='login' ? '登录' : '注册';
+  document.getElementById('lgSwitch').textContent = authMode==='login' ? '没有账号?注册一个 →' : '已有账号?去登录 →';
+  document.getElementById('lgDesc').textContent = authMode==='login'
+    ? '登录后,全家人的数据在所有设备之间实时同步。每台设备只需登录一次。'
+    : '注册一个自己的账号(密码至少 6 位)。注册后可以创建新家庭,或凭邀请码加入家人的家庭。';
+  document.getElementById('lgPass').setAttribute('autocomplete', authMode==='login' ? 'current-password' : 'new-password');
+}
+async function submitAuth(){
   const email = document.getElementById('lgEmail').value.trim();
   const pass  = document.getElementById('lgPass').value;
   const btn   = document.getElementById('lgBtn');
   if(!email || !pass){ toast('请输入邮箱和密码'); return; }
-  btn.disabled = true; btn.textContent = '登录中…';
-  const { error } = await supa.auth.signInWithPassword({ email, password: pass });
-  btn.disabled = false; btn.textContent = '登录';
-  if(error){ toast('登录失败:' + error.message); return; }
+  if(authMode==='signup' && pass.length<6){ toast('密码至少要 6 位哦'); return; }
+  btn.disabled = true; btn.textContent = authMode==='login' ? '登录中…' : '注册中…';
+  try{
+    if(authMode==='login'){
+      const { error } = await supa.auth.signInWithPassword({ email, password: pass });
+      if(error) throw error;
+    }else{
+      const { data, error } = await supa.auth.signUp({ email, password: pass });
+      if(error) throw error;
+      if(!data.session){   // 后台开了"邮箱确认"时没有即时会话
+        toast('注册成功!请去邮箱点确认链接,然后回来登录');
+        toggleAuthMode();
+        return;
+      }
+    }
+    await afterAuth();
+  }catch(e){
+    const msg = String(e.message||e);
+    toast((authMode==='login'?'登录失败:':'注册失败:') +
+      (msg.includes('already registered') ? '这个邮箱已经注册过了,直接登录即可' :
+       msg.includes('Invalid login credentials') ? '邮箱或密码不对' : msg));
+  }finally{
+    btn.disabled = false;
+    btn.textContent = authMode==='login' ? '登录' : '注册';
+  }
+}
+/* ====== 创建 / 加入家庭 ====== */
+function showFamSetup(){
+  hideLogin();
+  document.getElementById('famOverlay').style.display = 'flex';
+}
+async function createFamily(){
+  const btn = document.getElementById('famCreateBtn');
+  btn.disabled = true; btn.textContent = '创建中…';
+  const { data, error } = await supa.rpc('create_family', { fam_name: document.getElementById('famName').value });
+  btn.disabled = false; btn.textContent = '创建新家庭';
+  if(error){ toast('创建失败:' + error.message); return; }
+  toast('家庭「' + data.name + '」创建好了!邀请码:' + data.invite_code);
+  await afterAuth();
+}
+async function joinFamily(){
+  const code = document.getElementById('famCode').value.trim();
+  if(code.length < 6){ flashErr(document.getElementById('famCode')); toast('请输入 6 位邀请码'); return; }
+  const btn = document.getElementById('famJoinBtn');
+  btn.disabled = true; btn.textContent = '加入中…';
+  const { data, error } = await supa.rpc('join_family', { code });
+  btn.disabled = false; btn.textContent = '凭邀请码加入';
+  if(error){ toast('加入失败:' + error.message); return; }
+  toast('欢迎加入「' + data.name + '」🎉');
   await afterAuth();
 }
 
@@ -819,12 +945,59 @@ function renderHeader(){
     if(e.key==='Enter') confirmAddMember(wrap.querySelector('.inline-add .btn'));
   });
 
+  // 本机身份胸针:显示这台设备默认记在谁名下
+  const me = memberOf(whoami());
+  const who = document.createElement('span');
+  who.className = 'member-chip who-pill';
+  who.innerHTML = '<span style="color:var(--ink-soft)">本机:</span>'+
+    (me ? '<span class="dot" style="background:'+me.color+'"></span>'+esc(me.name) : '未设置')+
+    '<button onclick="askWhoami(true)">切换</button>';
+  bar.appendChild(who);
+  // 邀请码胸针:点击复制,发给家人即可加入
+  if(FAMILY && FAMILY.invite_code){
+    const inv = document.createElement('span');
+    inv.className = 'member-chip who-pill';
+    inv.style.cursor = 'pointer';
+    inv.title = '点击复制邀请码,发给家人,TA 注册后凭码加入「'+esc(FAMILY.name)+'」';
+    inv.innerHTML = '<span style="color:var(--ink-soft)">邀请码:</span><b style="letter-spacing:.12em">'+esc(FAMILY.invite_code)+'</b>';
+    inv.onclick = ()=>{
+      const txt = '来加入我们的家庭面板「'+FAMILY.name+'」吧!打开 '+location.origin+location.pathname+' 注册账号,然后输入邀请码 '+FAMILY.invite_code+' 加入。';
+      (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject())
+        .then(()=>toast('邀请文字已复制,发给家人吧 ✉'))
+        .catch(()=>toast('邀请码:'+FAMILY.invite_code));
+    };
+    bar.appendChild(inv);
+  }
+
   ['evMember','todoMember','noteMember','expMember'].forEach(id=>{
     const sel = document.getElementById(id);
-    const prev = sel.value;
+    const prev = sel.value || whoami() || '';
     sel.innerHTML = state.members.map(m=>'<option value="'+m.id+'">'+esc(m.name)+'</option>').join('');
     if([...sel.options].some(o=>o.value===prev)) sel.value=prev;
   });
+}
+/* ====== 本机身份:这台设备默认属于谁(存本机,不同步) ====== */
+const WHO_KEY = 'fh:whoami';
+const whoami = () => localStorage.getItem(WHO_KEY);
+function setWhoami(id){
+  localStorage.setItem(WHO_KEY, id);
+  document.getElementById('whoOverlay').style.display = 'none';
+  ['evMember','todoMember','noteMember','expMember'].forEach(sid=>{
+    const s = document.getElementById(sid);
+    if(s && [...s.options].some(o=>o.value===id)) s.value = id;
+  });
+  renderHeader();
+  const m = memberOf(id);
+  toast('好的,这台设备默认记在「'+(m?m.name:'')+'」名下 ✓');
+}
+function askWhoami(force){
+  if(!force && memberOf(whoami())) return;   // 已设置且成员还在,不打扰
+  if(!state.members.length) return;
+  document.getElementById('whoBtns').innerHTML = state.members.map(m=>
+    '<button onclick="setWhoami(\''+m.id+'\')" style="display:flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:10px 20px;font-family:var(--round);font-size:14.5px;color:var(--ink);cursor:pointer">'+
+    '<span class="dot" style="background:'+m.color+'"></span>'+esc(m.name)+'</button>'
+  ).join('');
+  document.getElementById('whoOverlay').style.display = 'flex';
 }
 function confirmAddMember(btn){ if(!requireLogin()) return;
   const input = btn.parentElement.querySelector('input');
@@ -833,6 +1006,7 @@ function confirmAddMember(btn){ if(!requireLogin()) return;
   state.members.push({id:uid(),name:name.slice(0,10),color:PALETTE[state.members.length%PALETTE.length]});
   save(); renderAll();
   toast('已添加成员「'+name+'」');
+  askWhoami(false);   // 还没设置本机身份的话,顺势问一下
 }
 /* 两步确认移除(替代 confirm 弹窗) */
 function removeMember(btn,id){ if(!requireLogin()) return;
@@ -1061,6 +1235,17 @@ function addRecord(){ if(!requireLogin()) return;
 }
 function delExpense(id){ if(!requireLogin()) return; if(editingRec&&editingRec.id===id) cancelEditRec(); state.expenses=state.expenses.filter(e=>e.id!==id); save(); renderFinance(); }
 function delIncome(id){ if(!requireLogin()) return; if(editingRec&&editingRec.id===id) cancelEditRec(); state.incomes=state.incomes.filter(e=>e.id!==id); save(); renderFinance(); }
+/* 两步确认删除:第一次点变红提示,再点才真删,3 秒后自动还原 */
+function confirmDelRec(btn, type, id){ if(!requireLogin()) return;
+  if(!btn.classList.contains('confirming')){
+    btn.classList.add('confirming'); btn.textContent = '确定删除?';
+    btn._rt = setTimeout(()=>{ btn.classList.remove('confirming'); btn.textContent = '✕'; }, 3000);
+    return;
+  }
+  clearTimeout(btn._rt);
+  if(type==='inc') delIncome(id); else delExpense(id);
+  toast('已删除这一笔');
+}
 
 /* ============ 收支趋势曲线 ============ */
 let trendFocus = null;
@@ -1244,24 +1429,63 @@ function renderFinance(){
       '<span class="cval">'+fmt(used)+(quota>0 ? ' / '+fmt(quota) : ' · 未设预算')+'</span></div>';
   }).join('');
 
-  /* 最近收支列表 */
+  renderRecList();
+}
+
+/* ============ 收支清单:筛选 + 分页 ============ */
+let finType = 'all', finMonth = 'recent', finShown = 20;
+function setFinType(t){ finType = t; finShown = 20; renderRecList(); }
+function setFinMonth(v){ finMonth = v; finShown = 20; renderRecList(); }
+function finShowMore(){ finShown += 20; renderRecList(); }
+function renderRecList(){
   const list = document.getElementById('expList');
-  const all = state.expenses.map(e=>({...e,_t:'exp'}))
+  ['ftAll','ftExp','ftInc'].forEach(id=>{
+    const on = (id==='ftAll'&&finType==='all')||(id==='ftExp'&&finType==='exp')||(id==='ftInc'&&finType==='inc');
+    document.getElementById(id).className = on ? 'on' : '';
+  });
+  let all = state.expenses.map(e=>({...e,_t:'exp'}))
     .concat(state.incomes.map(e=>({...e,_t:'inc'})))
-    .sort((a,b)=>b.ts-a.ts).slice(0,14);
+    .sort((a,b)=> a.date===b.date ? b.ts-a.ts : (a.date<b.date?1:-1));   // 按账单日期倒序
+
+  /* 月份下拉:数据里出现过的月份 */
+  const months = [...new Set(all.map(e=>e.date.slice(0,7)))].sort().reverse();
+  const msel = document.getElementById('finMonth');
+  msel.innerHTML = '<option value="recent">全部时间</option>'+
+    months.map(m=>{ const p=m.split('-'); return '<option value="'+m+'">'+p[0]+'年'+(+p[1])+'月</option>'; }).join('');
+  msel.value = (finMonth==='recent'||months.includes(finMonth)) ? finMonth : (finMonth='recent');
+
+  /* 应用筛选 */
+  let rows = all;
+  if(finMonth!=='recent') rows = rows.filter(e=>e.date.startsWith(finMonth));
+  if(finType!=='all')     rows = rows.filter(e=>e._t===finType);
+
+  /* 合计 */
+  const sExp = rows.reduce((s,e)=>s+(e._t==='exp'?e.amount:0),0);
+  const sInc = rows.reduce((s,e)=>s+(e._t==='inc'?e.amount:0),0);
+  document.getElementById('finSum').innerHTML = rows.length
+    ? '共 '+rows.length+' 笔'+(finType!=='inc'?' · 支出 '+fmt(sExp):'')+(finType!=='exp'?' · 收入 '+fmt(sInc):'')
+    : '';
+
   if(!all.length){
     list.innerHTML = '<li class="empty">还没有记账。记下第一笔收入或支出吧 ﹙˘ ³˘﹚</li>'; return;
   }
-  list.innerHTML = all.map(e=>{
+  if(!rows.length){
+    list.innerHTML = '<li class="empty">这个筛选条件下没有记录 ˙˚ʚ(´◡`)ɞ˚˙</li>'; return;
+  }
+  const shown = rows.slice(0, finShown);
+  list.innerHTML = shown.map(e=>{
     const p = e.date.split('-');
     return '<li class="item'+(editingRec&&editingRec.id===e.id?' editing':'')+'">'+
       '<div class="main"><div class="title">'+esc(e.cat)+(e.note?' · '+esc(e.note):'')+'</div>'+
       '<div class="meta">'+(+p[1])+'月'+(+p[2])+'日 · '+memberTag(e.memberId)+'</div></div>'+
       '<span class="amt '+(e._t==='inc'?'inc':'')+'">'+(e._t==='inc'?'+':'−')+fmt(e.amount)+'</span>'+
       '<button class="edit" aria-label="编辑" onclick="editRecord(\''+e.id+'\',\''+e._t+'\')">✎</button>'+
-      '<button class="del" aria-label="删除" onclick="'+(e._t==='inc'?'delIncome':'delExpense')+'(\''+e.id+'\')">✕</button>'+
+      '<button class="del" aria-label="删除" onclick="confirmDelRec(this,\''+e._t+'\',\''+e.id+'\')">✕</button>'+
     '</li>';
-  }).join('');
+  }).join('') +
+  (rows.length > finShown
+    ? '<li><button class="loadmore" onclick="finShowMore()">再显示 20 笔(还有 '+(rows.length-finShown)+' 笔)</button></li>'
+    : '');
 }
 
 /* ================= 待办事项 ================= */
@@ -1342,6 +1566,8 @@ document.getElementById('evTitle').addEventListener('keydown',e=>{ if(e.key==='E
 document.getElementById('expNote').addEventListener('keydown',e=>{ if(e.key==='Enter') addRecord(); });
 setRecType('exp');
 switchBudgetView('month');
+document.getElementById('lgPass').addEventListener('keydown',e=>{ if(e.key==='Enter') submitAuth(); });
+document.getElementById('famCode').addEventListener('keydown',e=>{ if(e.key==='Enter') joinFamily(); });
 // 屏幕宽度变化时重绘趋势图(如手机横竖屏切换)
 let trendRz; window.addEventListener('resize',()=>{ clearTimeout(trendRz); trendRz=setTimeout(renderTrend,200); });
 // 日期默认今天(跟随设备时钟,自动网络同步)
