@@ -171,6 +171,8 @@
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   .savenote{max-width:1080px;margin:16px auto 0;padding:0 20px;font-size:12px;color:var(--ink-soft);text-align:center;letter-spacing:.04em}
+  /* 未登录锁定:只露出顶部首屏,面板内容全部隐藏 */
+  body.locked #mainDash, body.locked main, body.locked #albumSec{display:none}
   @media(prefers-reduced-motion:no-preference){
     .card{animation:rise .4s ease both}
     @keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
@@ -259,7 +261,7 @@
   .lb-bar button.danger{border-color:rgba(255,120,120,.6);color:#ffb3b3}
 </style>
 </head>
-<body>
+<body class="locked">
 
 <section class="hero" id="heroSec">
   <button class="auth-btn" id="authBtn" onclick="authAction()">登录</button>
@@ -442,7 +444,6 @@
     <input id="lgPass" type="password" placeholder="密码" autocomplete="current-password" style="width:100%;box-sizing:border-box;margin-bottom:16px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--bg);color:var(--ink)">
     <button id="lgBtn" onclick="submitAuth()" style="width:100%;padding:12px;border:none;border-radius:12px;background:var(--matcha-deep);color:#fff;font-size:14.5px;font-weight:700;font-family:var(--round);cursor:pointer">登录</button>
     <div style="font-size:12px;color:var(--ink-soft);margin-top:12px;text-align:center"><a href="javascript:void(0)" id="lgSwitch" onclick="toggleAuthMode()" style="color:var(--matcha-deep)">没有账号?注册一个 →</a></div>
-    <div style="font-size:11px;color:var(--ink-soft);margin-top:8px;text-align:center">暂不登录可以浏览,登录后才能编辑和同步 <a href="javascript:void(0)" onclick="hideLogin()" style="color:var(--matcha-deep)">先跳过</a></div>
   </div>
 </div>
 <div id="famOverlay" style="display:none;position:fixed;inset:0;z-index:97;background:rgba(20,18,24,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
@@ -454,14 +455,18 @@
     <div style="display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--ink-soft);font-size:11px"><span style="flex:1;height:1px;background:var(--line)"></span>或<span style="flex:1;height:1px;background:var(--line)"></span></div>
     <input id="famCode" type="text" maxlength="6" placeholder="6 位邀请码,比如:A3F9KB" autocapitalize="characters" style="width:100%;box-sizing:border-box;margin-bottom:10px;padding:11px 14px;border:1px solid var(--line);border-radius:12px;font-size:14px;background:var(--bg);color:var(--ink);text-transform:uppercase;letter-spacing:.2em">
     <button id="famJoinBtn" onclick="joinFamily()" style="width:100%;padding:12px;border:1.5px solid var(--matcha-deep);border-radius:12px;background:none;color:var(--matcha-deep);font-size:14.5px;font-weight:700;font-family:var(--round);cursor:pointer">凭邀请码加入</button>
-    <div style="font-size:11px;color:var(--ink-soft);margin-top:12px;text-align:center"><a href="javascript:void(0)" onclick="document.getElementById('famOverlay').style.display='none'" style="color:var(--matcha-deep)">先逛逛(仅浏览)</a> · <a href="javascript:void(0)" onclick="famLogout()" style="color:var(--matcha-deep)">登出</a></div>
+    <div style="font-size:11px;color:var(--ink-soft);margin-top:12px;text-align:center"><a href="javascript:void(0)" onclick="famLogout()" style="color:var(--matcha-deep)">换个账号登录</a></div>
   </div>
 </div>
-<div id="whoOverlay" style="display:none;position:fixed;inset:0;z-index:98;background:rgba(20,18,24,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this&&localStorage.getItem('fh:whoami'))this.style.display='none'">
+<div id="whoOverlay" style="display:none;position:fixed;inset:0;z-index:98;background:rgba(20,18,24,.45);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px" onclick="if(event.target===this)tryCloseWho()">
   <div style="background:var(--card);border:1px solid var(--line);border-radius:20px;padding:26px 24px;max-width:320px;width:100%;box-shadow:0 20px 50px rgba(0,0,0,.25);text-align:center">
-    <div style="font-family:var(--round);font-size:17px;font-weight:700;margin-bottom:6px">👋 这台设备是谁在用?</div>
-    <div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;line-height:1.7">选好之后,记账、待办等会默认记在这个名字下,不容易选错人。以后点顶栏的「本机」随时可以换。</div>
+    <div id="whoTitle" style="font-family:var(--round);font-size:17px;font-weight:700;margin-bottom:6px">👋 这台设备是谁在用?</div>
+    <div id="whoDesc" style="font-size:12.5px;color:var(--ink-soft);margin-bottom:16px;line-height:1.7"></div>
     <div id="whoBtns" style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <input id="whoNewName" type="text" maxlength="10" placeholder="添加成员,比如:老婆" style="flex:1;min-width:0;box-sizing:border-box;padding:10px 14px;border:1px solid var(--line);border-radius:12px;font-size:13.5px;background:var(--bg);color:var(--ink)">
+      <button onclick="whoAddMember()" style="flex:none;border:none;border-radius:12px;background:var(--matcha-deep);color:#fff;font-size:13.5px;font-weight:700;font-family:var(--round);padding:10px 18px;cursor:pointer">添加</button>
+    </div>
   </div>
 </div>
 <div id="toast" role="status"></div>
@@ -472,11 +477,14 @@
 /* ================= 数据与存储 ================= */
 const KEY = 'family-hub:data';
 const PALETTE = ['#E8B7BC','#9DB89A','#A9C3D4','#E6C079','#B8A6C9','#8FBFB2'];
-let state = {
-  members: [],   // 首次使用时在顶栏自行添加家庭成员
-  events: [], todos: [], shopping: [], notes: [],
-  expenses: [], incomes: [], budget: {month:{}, year:{}}
-};
+function freshState(){
+  return {
+    members: [],   // 首次使用时自行添加家庭成员
+    events: [], todos: [], shopping: [], notes: [],
+    expenses: [], incomes: [], budget: {month:{}, year:{}}
+  };
+}
+let state = freshState();
 /* ====== Supabase 配置:只需要填这两行 ====== */
 const SUPA_URL = 'https://mtckbvzuytaplelvkzcp.supabase.co';   // 形如 https://xxxx.supabase.co
 const SUPA_KEY = 'sb_publishable_3iV-BlCEFV-9URlNkWAVuQ_yYd5ipHb';      // Settings -> API -> anon public
@@ -529,9 +537,16 @@ async function load(){
   normalizeState();
   renderAll();
 
-  if(!window.supabase || SUPA_URL.indexOf('填') === 0){
+  if(SUPA_URL.indexOf('填') === 0){
+    // 未配置云同步的本地沙盒模式(方便别人 fork 后直接体验)
+    document.body.classList.remove('locked');
     note('本机模式:数据只保存在这台设备上(未配置云同步)');
     askWhoami(false);
+    return;
+  }
+  if(!window.supabase){
+    note('云同步组件加载失败,请检查网络后刷新页面');
+    showLogin();
     return;
   }
   supa = window.supabase.createClient(SUPA_URL, SUPA_KEY);
@@ -553,6 +568,8 @@ async function afterAuth(){
 
     const { data, error } = await supa.from('family_state').select('data,updated_at').eq('id', FAMILY.family_id).maybeSingle();
     if(error) throw error;
+    /* 本机缓存归属校验:缓存的是别的家庭(或没登录过)的数据,不能带进当前家庭 */
+    const cacheOwner = localStorage.getItem('fh:family');
     if(data && data.data && Object.keys(data.data).length){
       state = data.data;
       normalizeState();
@@ -563,19 +580,28 @@ async function afterAuth(){
       }
       localStorage.setItem('fh:seen', new Date().toISOString());
     }else{
-      await pushRemote();            // 云端还没有数据,把本机数据传上去
+      if(cacheOwner !== FAMILY.family_id){
+        state = freshState();          // 新家庭从零开始,不带入这台设备上残留的缓存
+        normalizeState();
+        renderAll();
+      }
+      await pushRemote();              // 云端还没有数据,把本机数据传上去
     }
+    localStorage.setItem('fh:family', FAMILY.family_id);
+    if(cacheOwner !== FAMILY.family_id) localStorage.removeItem(WHO_KEY);   // 换了家庭,本机身份作废
+    if(!memberOf(whoami())) localStorage.removeItem(WHO_KEY);               // 身份必须是本家庭现有成员
     subscribeRealtime();
     synced = true;
     const ab = document.getElementById('authBtn'); if(ab) ab.textContent = '登出';
     note('云同步已开启 ⸝⸝ 「'+FAMILY.name+'」的成员都能实时看到彼此的修改');
+    document.body.classList.remove('locked');
     renderHeader();
-    askWhoami(false);
-    if(!state.members.length) setTimeout(()=>toast('先在顶栏「+ 添加成员」把家人加进来吧'), 1200);
+    askWhoami(false);   // 没有成员或没确认本机身份时会强制弹出,完成后才能操作
     loadAlbum();
   }catch(e){
     console.error(e);
-    note('云同步失败,已切换为本机保存:' + (e.message||e));
+    note('云同步失败:' + (e.message||e));
+    showLogin();
   }
 }
 
@@ -815,9 +841,11 @@ async function authAction(){
     if(rtChannel){ try{ supa.removeChannel(rtChannel); }catch(e){} rtChannel = null; }
     document.getElementById('famOverlay').style.display = 'none';
     const ab = document.getElementById('authBtn'); if(ab) ab.textContent = '登录';
-    note('已登出:当前仅可浏览,登录后可编辑并同步');
+    note('已登出,登录后继续使用');
+    document.body.classList.add('locked');
     renderHeader();
     loadAlbum();
+    showLogin();
     toast('已登出');
   }else if(supa){
     showLogin();
@@ -829,11 +857,12 @@ async function famLogout(){
   try{ await supa.auth.signOut(); }catch(e){}
   synced = false; FAMILY = null;
   document.getElementById('famOverlay').style.display = 'none';
-  note('已登出:当前仅可浏览');
+  document.body.classList.add('locked');
+  note('已登出,登录后继续使用');
   showLogin();
 }
 function showLogin(){ document.getElementById('loginOverlay').style.display='flex'; }
-function hideLogin(){ document.getElementById('loginOverlay').style.display='none'; askWhoami(false); }
+function hideLogin(){ document.getElementById('loginOverlay').style.display='none'; }
 let authMode = 'login';
 function toggleAuthMode(){
   authMode = authMode==='login' ? 'signup' : 'login';
@@ -992,12 +1021,33 @@ function setWhoami(id){
 }
 function askWhoami(force){
   if(!force && memberOf(whoami())) return;   // 已设置且成员还在,不打扰
-  if(!state.members.length) return;
+  const has = state.members.length > 0;
+  document.getElementById('whoTitle').textContent = has ? '👋 这台设备是谁在用?' : '👨‍👩‍👧 先把家庭成员加进来';
+  document.getElementById('whoDesc').textContent = has
+    ? '点击你自己的名字完成设置。之后记账、待办会默认记在这个名字下;也可以继续添加其他成员。'
+    : '把家里人一个个加进来(记得包括你自己),然后点击你自己的名字完成设置。';
   document.getElementById('whoBtns').innerHTML = state.members.map(m=>
     '<button onclick="setWhoami(\''+m.id+'\')" style="display:flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:10px 20px;font-family:var(--round);font-size:14.5px;color:var(--ink);cursor:pointer">'+
     '<span class="dot" style="background:'+m.color+'"></span>'+esc(m.name)+'</button>'
   ).join('');
   document.getElementById('whoOverlay').style.display = 'flex';
+}
+/* 只有已确认有效身份时,点空白处才能关掉 */
+function tryCloseWho(){
+  if(memberOf(whoami())) document.getElementById('whoOverlay').style.display = 'none';
+  else toast('先点一下你自己的名字哦');
+}
+/* 在身份弹窗里直接添加成员 */
+function whoAddMember(){
+  const input = document.getElementById('whoNewName');
+  const name = input.value.trim();
+  if(!name){ flashErr(input); return; }
+  if(state.members.some(m=>m.name===name)){ toast('已经有「'+name+'」啦'); return; }
+  state.members.push({id:uid(), name:name.slice(0,10), color:PALETTE[state.members.length%PALETTE.length]});
+  input.value = '';
+  save(); renderAll();
+  askWhoami(true);   // 重新渲染成员按钮,弹窗保持打开
+  toast('已添加「'+name+'」,点名字选择这台设备的主人');
 }
 function confirmAddMember(btn){ if(!requireLogin()) return;
   const input = btn.parentElement.querySelector('input');
